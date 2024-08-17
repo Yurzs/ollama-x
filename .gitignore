@@ -1,0 +1,19 @@
+.openapi_cli
+
+# Python compiled files
+*.pyc
+*.pyo
+__pycache__/
+
+# Python venv
+.venv/
+
+# Poetry
+poetry.lock
+
+# Build files
+build/
+dist/
+
+# Ignore all files in the .gitignore file
+!.gitignore
