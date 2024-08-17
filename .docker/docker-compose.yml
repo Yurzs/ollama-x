@@ -1,0 +1,61 @@
+name: ollama-x
+
+services:
+  app:
+    container_name: ollama-x-app
+    image: ollama-x:latest
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      LANGFUSE_HOST: ${LF_HOST}
+      LANGFUSE_PUBLIC_KEY: ${LF_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LF_SECRET_KEY}
+      ENFORCE_MODEL: ${ENFORCE_MODEL}
+    ports:
+      - "8000:8000"
+    volumes:
+      - cli_creds:/app/.openapi_cli/
+  scheduler:
+    container_name: ollama-x-scheduler
+    image: ollama-x:latest
+    pull_policy: never
+    depends_on:
+      - app
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+    command: ["poetry", "run", "ollama-x-scheduler"]
+  mongo:
+    container_name: ollama-x-mongo
+    image: mongo:latest
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+    volumes:
+      - database:/data/db
+  nginx:
+    container_name: ollama-x-nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - letsencrypt:/etc/letsencrypt/
+      - ../nginx/template-variables.conf:/etc/nginx/templates/10-variables.conf.template:ro
+      - ../nginx/proxy.conf:/etc/nginx/nginx.conf
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+  certbot:
+    container_name: ollama-x-certbot
+    image: certbot/certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt/
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do letsencrypt renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  letsencrypt:
+  database:
+  cli_creds:
