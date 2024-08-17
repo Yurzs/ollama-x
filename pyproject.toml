@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "ollama-x"
+version = "0.1.0"
+description = "Ollama Proxy Server with Extensions"
+authors = ["Yury Sokov (Yurzs) <me@yurzs.dev>"]
+readme = "README.md"
+packages = [
+    { include = "ollama_x", from = ".", to = "ollama_x" },
+    { include = "ollama_x_client", from = ".", to = "ollama_x_client"},
+]
+exclude = ["ollama_x"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = ">=2.8.2,<3"
+uvicorn = ">=0.30,<1"
+fastapi = ">=0.112,<1"
+pydantic-mongo-document = "^0.1.13"
+aiohttp = "^3.10.3"
+pydantic-app-config = {git = "https://github.com/Yurzs/pydantic-app-config.git"}
+openapi-python-client = "^0.21.2"
+openapi-cli = "^0.1.5"
+apscheduler = "^3.10.4"
+langfuse = "^2.43.3"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+black = "^24.8.0"
+autoflake = "^2.3.1"
+
+[tool.poetry.scripts]
+ollama-x = "openapi_cli:cli"
+ollama-x-scheduler = "ollama_x.scheduler:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+
+[tool.black]
+line_length = 100
+target_version = ["py312"]
+
+[tool.pylint]
+target_versions = ["py312"]
+max-line-length = 100
+profile = "black"
+
+[tool.autoflake]
+remove_all_unused_imports = true
+remove_unused_variables = true
