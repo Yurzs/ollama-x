@@ -166,8 +166,9 @@ async def show_model(request: Request):
     """Proxy show request."""
 
     data = await request.json()
+    request.state.model = data["name"]
 
-    server = await get_min_queue_server(data["name"])
+    server = await get_min_queue_server(request.state.model)
 
     if server is None:
         raise NoServerAvailable()
