@@ -50,7 +50,7 @@ def prepare_project(
 async def list_projects(user: AuthorizedUser, request: Request):
 
     projects = []
-    for project in await ContinueDevProject.all_for_user(user.id):
+    async for project in ContinueDevProject.all_for_user(user.id):
         projects.append(prepare_project(user, project, request))
 
     return projects

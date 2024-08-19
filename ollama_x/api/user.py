@@ -24,7 +24,7 @@ async def get_user(admin: AdminUser, username: str | None = None) -> User | list
     """Get users."""
 
     if username is None:
-        return await User.all()
+        return [user async for user in User.all()]
 
     user = await User.one_by_username(username, required=False)
 

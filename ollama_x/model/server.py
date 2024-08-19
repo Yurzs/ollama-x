@@ -1,5 +1,6 @@
 import datetime
-from typing import Any
+from collections.abc import AsyncIterable
+from typing import Any, Self
 
 import pymongo
 from pydantic import BaseModel, Field, HttpUrl
@@ -38,7 +39,7 @@ class APIServer(Document, ServerBase):
         await cls.collection().create_index([("url", pymongo.ASCENDING)], unique=True)
 
     @classmethod
-    async def all_active(cls, model_name: str = None):
+    def all_active(cls, model_name: str = None) -> AsyncIterable[Self]:
         """Find all active servers suitable for the model."""
 
         query = {
@@ -50,7 +51,7 @@ class APIServer(Document, ServerBase):
         if model_name is not None:
             query["models.name"] = model_name
 
-        return await cls.all(add_query=query)
+        return cls.all(add_query=query)
 
     @classmethod
     async def new(cls, base: ServerBase):

@@ -40,7 +40,7 @@ async def admin_user(token: BearerToken, request: Request) -> User:
     is_local = request.client.host in ["localhost", "127.0.0.1"]
 
     if is_local and token == "admin":
-        if not await User.all(add_query={"is_admin": True}):
+        if not await User.one(add_query={"is_admin": True}):
             await User.new(username="admin", key="admin", is_admin=True)
 
     if hasattr(request.state, "user"):

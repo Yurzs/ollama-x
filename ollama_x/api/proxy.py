@@ -75,11 +75,9 @@ class QueueHandler:
 async def get_min_queue_server(model: str | None) -> APIServer | None:
     """Find the least loaded server."""
 
-    alive_servers = await APIServer.all_active(model_name=model)
-
     min_queue = (None, math.inf)
 
-    for server in alive_servers:
+    async for server in APIServer.all_active(model_name=model):
         queue = QueueHandler.get(server.url).queue
         queue_size = queue.qsize()
 
@@ -151,12 +149,12 @@ async def proxy_queue_request(semaphore: Semaphore, queue_request: QueueRequest)
 
 
 @router.get("/tags", include_in_schema=False)
-async def get_tags(user: AuthorizedUser):
+async def get_tags():
     """Get tags from all servers."""
 
     models = {}
 
-    for server in await APIServer.all_active():
+    async for server in APIServer.all_active():
         for model in server.models:
             models[model["model"]] = model
 
@@ -164,7 +162,7 @@ async def get_tags(user: AuthorizedUser):
 
 
 @router.post("/show", include_in_schema=False)
-async def show_model(user: AuthorizedUser, request: Request):
+async def show_model(request: Request):
     """Proxy show request."""
 
     data = await request.json()
@@ -172,14 +170,25 @@ async def show_model(user: AuthorizedUser, request: Request):
     server = await get_min_queue_server(data["name"])
 
     if server is None:
-        raise NoServerAvailable(username=user.username)
+        raise NoServerAvailable()
+
+    return await proxy_request(server, request)
+
+
+@router.post("/embed", include_in_schema=False)
+async def generate_embeddings(request: Request):
+    """Generate embeddings."""
+
+    server = await get_min_queue_server(request["model"])
+    if server is None:
+        raise NoServerAvailable()
 
     return await proxy_request(server, request)
 
 
 @router.post("/chat", include_in_schema=False)
 @router.post("/generate", include_in_schema=False)
-async def proxy(session: AISession, user: AuthorizedUser, request: Request):
+async def proxy(session: AISession, request: Request):
     """Proxy generate request."""
 
     request_data = await request.json()
@@ -188,7 +197,7 @@ async def proxy(session: AISession, user: AuthorizedUser, request: Request):
 
     server = await get_min_queue_server(request.state.model)
     if server is None:
-        raise NoServerAvailable(username=user.username)
+        raise NoServerAvailable()
 
     queue_request = QueueRequest(server, request)
     queue = QueueHandler.get(server.url).queue
