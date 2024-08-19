@@ -122,6 +122,7 @@ class OllamaProxyMiddleware(BaseModel):
         )
 
     async def listen_stream(self, stream: AsyncIterable[bytes]) -> AsyncIterable[bytes]:
+        """Listen to stream and update response."""
 
         try:
             async for chunk in stream:
@@ -165,7 +166,10 @@ async def ollama_middleware(
     response = await call_next(request)
 
     if ollama is not None:
-        if isinstance(response, StreamingResponse):
+        if response.status_code != 200:
+            ollama.is_done.set_result(False)
+
+        elif isinstance(response, StreamingResponse):
             response.body_iterator = ollama.listen_stream(response.body_iterator)
         else:
             ollama.response = response.body

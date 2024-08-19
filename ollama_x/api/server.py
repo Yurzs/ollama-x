@@ -15,7 +15,7 @@ async def get_server(admin: AdminUser, server_id: str | None = None) -> list[API
     if server_id:
         return await APIServer.one(server_id)
 
-    return await APIServer.all()
+    return [s async for s in APIServer.all()]
 
 
 @router.post("/", operation_id="create-server", tags=["admin"])

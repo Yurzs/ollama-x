@@ -93,7 +93,7 @@ async def ensure_jobs():
 
     scheduler.remove_all_jobs()
 
-    for server in await APIServer.all():
+    async for server in APIServer.all():
         scheduler.add_job(
             check_api,
             "interval",

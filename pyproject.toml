@@ -16,7 +16,7 @@ python = "^3.12"
 pydantic = ">=2.8.2,<3"
 uvicorn = ">=0.30,<1"
 fastapi = ">=0.112,<1"
-pydantic-mongo-document = "^0.1.13"
+pydantic-mongo-document = "^0.1.16"
 aiohttp = "^3.10.3"
 pydantic-app-config = {git = "https://github.com/Yurzs/pydantic-app-config.git"}
 openapi-python-client = "^0.21.2"
@@ -30,7 +30,7 @@ black = "^24.8.0"
 autoflake = "^2.3.1"
 
 [tool.poetry.scripts]
-ollama-x = "openapi_cli:cli"
+ollama-x = "openapi_cli.cli:main"
 ollama-x-scheduler = "ollama_x.scheduler:main"
 
 [build-system]

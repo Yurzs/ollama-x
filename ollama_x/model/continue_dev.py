@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterable
 from typing import Generic, Literal, Self, TypeVar, Union
 
 import pymongo
@@ -208,14 +209,14 @@ class ContinueDevProject(Document):
         )
 
     @classmethod
-    async def all_for_user(cls, user: str) -> list[Self]:
+    def all_for_user(cls, user: str) -> AsyncIterable[Self]:
         """Find all projects available for the user."""
 
         query = {
             "users": user,
         }
 
-        return await cls.all(add_query=query)
+        return cls.all(add_query=query)
 
     @classmethod
     async def one_by_name(cls, name: str) -> Self:

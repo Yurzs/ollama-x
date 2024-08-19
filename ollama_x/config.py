@@ -36,14 +36,14 @@ def setup_document(conf: "OllamaXConfig") -> None:
     )
 
 
-def ensure_indexes(conf: "OllamaXConfig") -> None:
+async def ensure_indexes(conf: "OllamaXConfig") -> None:
     """Ensure indexes for all models."""
 
     if conf.client_generation:
         return
 
     for model in ollama_x.model.__all__:
-        asyncio.run(getattr(ollama_x.model, model).create_indexes())
+        await getattr(ollama_x.model, model).create_indexes()
 
 
 def setup_log(conf: "OllamaXConfig") -> None:
@@ -112,6 +112,12 @@ class OllamaXConfig(EnvAppConfig):
         default=False,
         description="Client generation flag",
         alias="CLI_GEN",
+    )
+
+    anonymous_allowed: bool = Field(
+        default=False,
+        description="Anonymous allowed flag",
+        alias="ANONYMOUS_ALLOWED",
     )
 
 

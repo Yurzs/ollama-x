@@ -1,9 +1,9 @@
 import random
 import string
-from typing import ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 import pymongo
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
 from pydantic_mongo_document import Document, DocumentNotFound
 
 
@@ -13,7 +13,11 @@ class UserNotFound(DocumentNotFound):
 
 
 class UserBase(BaseModel):
-    username: str = Field(description="Username")
+    username: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, max_length=50, min_length=4),
+        Field(description="Username"),
+    ]
     is_admin: bool = Field(default=False, description="Is user admin flag")
     key: str | None = Field(description="Users API key")
 
