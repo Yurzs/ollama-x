@@ -177,10 +177,14 @@ async def show_model(request: Request):
 
 
 @router.post("/embed", include_in_schema=False)
+@router.post("/embeddings", include_in_schema=False)
 async def generate_embeddings(request: Request):
     """Generate embeddings."""
 
-    server = await get_min_queue_server(request["model"])
+    data = await request.json()
+    request.state.model = data["name"]
+
+    server = await get_min_queue_server(request.state.model)
     if server is None:
         raise NoServerAvailable()
 
