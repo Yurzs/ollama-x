@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
-from ollama_x.api.exceptions import UserNotFound
+from ollama_x.api.exceptions import UserAlreadyExist, UserNotFound
 from ollama_x.api.helpers import AdminUser
 from ollama_x.model import User
 from ollama_x.model.user import UserBase
@@ -79,3 +79,13 @@ async def change_key(admin: AdminUser, username: str) -> UserBase:
     await user.commit_changes(fields=["key"])
 
     return UserBase.from_document(user, exclude_secrets=False)
+
+
+@router.get("/register")
+async def user_register(email: EmailStr) -> UserBase:
+    """Register new user."""
+
+    if await User.one_by_username(email, required=False) is not None:
+        raise UserAlreadyExist()
+
+    return UserBase.from_document(await User.new(username=email))
