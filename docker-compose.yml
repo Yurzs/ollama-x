@@ -1,0 +1,57 @@
+name: ollama-x
+
+services:
+  app:
+    image: ghcr.io/yurzs/ollama-x:latest
+    container_name: ${PROJECT_NAME}-app
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      LANGFUSE_HOST: ${LF_HOST}
+      LANGFUSE_PUBLIC_KEY: ${LF_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LF_SECRET_KEY}
+      ENFORCE_MODEL: ${ENFORCE_MODEL}
+      SENTRY_DSN: ${SENTRY_DSN}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS}
+      ANONYMOUS_ALLOWED: ${ANONYMOUS_ALLOWED}
+      ANONYMOUS_MODEL: ${ANONYMOUS_MODEL}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ~/.openapi_cli:/app/.openapi_cli/
+  scheduler:
+    container_name: ${PROJECT_NAME}-scheduler
+    image: ghcr.io/yurzs/ollama-x:latest
+    depends_on:
+      - app
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      SENTRY_DSN: ${SENTRY_DSN}
+    command: ["poetry", "run", "ollama-x-scheduler"]
+  mongo:
+    container_name: ${PROJECT_NAME}-mongo
+    image: mongo:latest
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+    volumes:
+      - ./database:/data/db
+  nginx:
+    container_name: ${PROJECT_NAME}-nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt/
+      - ./nginx/template-variables.conf:/etc/nginx/templates/10-variables.conf.template:ro
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/proxy.conf
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+  certbot:
+    container_name: ${PROJECT_NAME}-certbot
+    image: certbot/certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt/
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do letsencrypt renew; sleep 12h & wait $${!}; done;'"
