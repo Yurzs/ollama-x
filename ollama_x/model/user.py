@@ -1,15 +1,24 @@
+import base64
 import random
 import string
 from typing import Annotated, ClassVar, Self
 
 import pymongo
+import pymongo.errors
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
 from pydantic_mongo_document import Document, DocumentNotFound
 
+from ollama_x.model import exceptions
+
 
 class UserNotFound(DocumentNotFound):
-    def __init__(self, username: str) -> None:
-        super().__init__(f"User '{username}' not found")
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(message or "User not found")
+
+
+class DuplicateKeyError(pymongo.errors.DuplicateKeyError):
+    def __str__(self) -> str:
+        return str(zip(self.details["keyPattern"].keys(), self.details["keyValue"].values()))
 
 
 class UserBase(BaseModel):
@@ -39,13 +48,20 @@ class User(UserBase, Document):
 
     key: SecretStr = Field(description="Users API key")
 
+    NotFoundError = UserNotFound
+    DuplicateKeyError = exceptions.DuplicateKeyError
+
     KEY_MIN_LENGTH: ClassVar[int] = 40
     KEY_MAX_LENGTH: ClassVar[int] = 60
-    BANNED_KEY_CHARS: ClassVar[set[str]] = {'"', "'", "\\"}
+    BANNED_KEY_CHARS: ClassVar[set[str]] = {'"', "'", "\\", ":"}
     ALLOWED_KEY_CHARS: ClassVar[set[str]] = set(
         string.ascii_letters + string.digits + string.punctuation
     ).difference(BANNED_KEY_CHARS)
     KEY_CHARS: ClassVar[str] = "".join(ALLOWED_KEY_CHARS)
+
+    @property
+    def is_guest(self):
+        return self.username == "guest"
 
     @classmethod
     async def create_indexes(cls) -> None:
@@ -65,7 +81,11 @@ class User(UserBase, Document):
 
         key_len = random.randint(cls.KEY_MIN_LENGTH, cls.KEY_MAX_LENGTH)
 
-        return SecretStr("".join(random.choice(cls.KEY_CHARS) for _ in range(key_len)))
+        return SecretStr(
+            base64.urlsafe_b64encode(
+                "".join(random.choice(cls.KEY_CHARS) for _ in range(key_len)).encode()
+            ).decode()
+        )
 
     @classmethod
     async def new(

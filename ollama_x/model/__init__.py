@@ -1,4 +1,4 @@
-from .continue_dev import ContinueDevProject
+from .continue_dev import ContinueDevProject, UserAlreadyInProject
 from .server import APIServer
 from .session import Session
 from .user import User
@@ -8,4 +8,5 @@ __all__ = [
     "ContinueDevProject",
     "Session",
     "User",
+    "UserAlreadyInProject",
 ]
