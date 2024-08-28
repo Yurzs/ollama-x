@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 
-import ollama_x.model
 from ollama_x.api import exceptions, routers
 from ollama_x.api.middleware import MIDDLEWARES
-from ollama_x.config import config  # noqa
 
 app = FastAPI()
 
