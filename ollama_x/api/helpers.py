@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
@@ -117,3 +117,21 @@ async def is_project_admin(user: AuthorizedUser, project_id: str):
 
 
 ProjectWithAdminAccess = Annotated[ContinueDevProject, Depends(is_project_admin)]
+
+
+def merge_responses(*responses: dict[int, dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    """Merge responses."""
+
+    result = {}
+
+    for response in responses:
+        for status_code, response_data in response.items():
+            response_model = response_data.pop("model", None)
+            response_description = response_data.pop("description", None)
+
+            result_model = result.setdefault(status_code, {}).setdefault("model", response_model)
+            result.setdefault(status_code, {}).setdefault("description", response_description)
+
+            result[status_code]["model"] = result_model | response_model
+
+    return result

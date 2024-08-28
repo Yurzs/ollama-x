@@ -3,7 +3,12 @@ from openapi_cli.separator import CLI_SEPARATOR
 from pydantic import BaseModel, ConfigDict, Field
 
 from ollama_x.api.exceptions import AccessDenied, APIError
-from ollama_x.api.helpers import AuthorizedUser, ContinueProject, ProjectWithAdminAccess
+from ollama_x.api.helpers import (
+    AuthorizedUser,
+    ContinueProject,
+    ProjectWithAdminAccess,
+    merge_responses,
+)
 from ollama_x.model import ContinueDevProject, User
 from ollama_x.model.continue_dev import (
     AllContextProviders,
@@ -133,13 +138,15 @@ class JoinResult(BaseModel):
     "/join/{invite_id}",
     operation_id=f"{PREFIX}.join",
     response_model=JoinResult | APIError,
-    responses={
-        **DEFAULT_RESPONSES,
-        400: {
-            "model": APIError[UserAlreadyInProject] | DEFAULT_RESPONSES.get(400, {}).get("model"),
-            "description": "Generic Errors.",
+    responses=merge_responses(
+        DEFAULT_RESPONSES,
+        {
+            400: {
+                "model": APIError[UserAlreadyInProject],
+                "description": "Generic Errors.",
+            },
         },
-    },
+    ),
 )
 async def continue_join(invite_id: str, user_key: str) -> JoinResult:
     """Join project by token."""
