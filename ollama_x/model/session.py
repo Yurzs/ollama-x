@@ -5,6 +5,8 @@ import pymongo
 from pydantic import Field
 from pydantic_mongo_document import Document
 
+from ollama_x.model import exceptions
+
 
 class Session(Document):
     """Ollama chat session."""
@@ -20,6 +22,8 @@ class Session(Document):
         description="Session expiration time",
         default_factory=lambda: datetime.datetime.now() + datetime.timedelta(seconds=3600),
     )
+
+    DuplicateKeyError = exceptions.DuplicateKeyError
 
     @classmethod
     async def create_indexes(cls) -> None:

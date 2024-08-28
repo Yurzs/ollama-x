@@ -1,9 +1,12 @@
 from collections.abc import AsyncIterable
 from typing import Generic, Literal, Self, TypeVar, Union
 
+import bson
 import pymongo
 from pydantic import BaseModel, Field, HttpUrl
 from pydantic_mongo_document import Document
+
+from ollama_x.model import exceptions
 
 P = TypeVar("P", bound="Provider")
 C = TypeVar("C")
@@ -12,8 +15,22 @@ X = TypeVar("X")
 NoneType = type(None)
 
 
+class ProjectExists(Document.DuplicateKeyError):
+    pass
+
+
+class ProjectNotFound(Document.NotFoundError):
+    def __init__(self, message: str | None = None) -> None:
+        super().__init__(message or "Project not found")
+
+
 class Docs(BaseModel):
     pass
+
+
+class UserAlreadyInProject(Exception):
+    def __init__(self):
+        super().__init__("User already in project")
 
 
 class ModelRequestOptions(BaseModel):
@@ -23,9 +40,9 @@ class ModelRequestOptions(BaseModel):
 class Model(BaseModel, Generic[P]):
     model: str = Field("AUTODETECT", description="Model name")
     title: str = Field("Model", description="Model title")
-    provider: P = Field(..., description="Provider")
+    provider: P = Field("ollama", description="Provider")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
-    api_base: HttpUrl = Field(description="OAPI base", alias="apiBase")
+    api_base: HttpUrl | None = Field(None, description="OAPI base", alias="apiBase")
     request_options: ModelRequestOptions = Field(
         default_factory=ModelRequestOptions,
         description="Request options",
@@ -66,7 +83,7 @@ class BaseCompletionOptions(BaseModel):
 
 
 class TabAutocompleteModel(BaseModel):
-    title: str = Field(..., description="Model title")
+    title: str = Field("ollama", description="Model title")
     provider: Literal["ollama"] = Field("ollama", description="Provider")
     model: str = Field(description="Model name")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
@@ -79,10 +96,45 @@ class TabAutocompleteModel(BaseModel):
     completion_options: BaseCompletionOptions | None = Field(
         None, description="Completion options", alias="completionOptions"
     )
+    request_options: RequestOptions = Field(
+        default_factory=RequestOptions,
+        description="Request options",
+        alias="requestOptions",
+    )
+
+
+class TabAutocompleteOptions(BaseModel):
+    disable: bool | None = Field(None, description="Disable autocomplete")
+    use_copy_buffer: bool | None = Field(
+        None, description="Use copy buffer data in query", alias="useCopyBuffer"
+    )
+    use_file_suffix: bool | None = Field(None, description="Use file suffix in query")
+    max_prompt_tokens: int | None = Field(
+        None, description="Max tokens in query", alias="maxPromptTokens"
+    )
+    debounce_delay: int | None = Field(
+        None, description="Time delay after last keystroke", alias="debounceDelay"
+    )
+    max_suffix_percentage: int | None = Field(
+        None, description="Max suffix percentage", alias="maxSuffixPercentage"
+    )
+    prefix_percentage: int | None = Field(
+        None, description="Prefix percentage", alias="prefixPercentage"
+    )
+    template: str | None = Field(None, description="Template")
+    multiline_completions: Literal["always", "never", "auto"] | None = Field(
+        None, description="Multiline completions", alias="multilineCompletions"
+    )
+    use_cache: bool | None = Field(None, description="Use cache", alias="useCache")
+    only_my_code: bool | None = Field(None, description="Only my code", alias="onlyMyCode")
+    use_other_files: bool | None = Field(None, description="Use other files", alias="useOtherFiles")
+    disable_in_files: list[str] | None = Field(
+        None, description="Disable in files", alias="disableInFiles"
+    )
 
 
 class EmbeddingsProvider(BaseModel):
-    provider: str = Field(..., description="Provider name")
+    provider: Literal["ollama"] = Field("ollama", description="Provider name")
     model: str | None = Field(None, description="Model name")
     api_base: HttpUrl | None = Field(None, description="API base", alias="apiBase")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
@@ -154,8 +206,8 @@ class ProjectConfig(BaseModel):
         alias="customCommands",
     )
 
-    request_options: RequestOptions | None = Field(
-        None,
+    request_options: RequestOptions = Field(
+        default_factory=RequestOptions,
         description="Request options",
         alias="requestOptions",
     )
@@ -164,6 +216,12 @@ class ProjectConfig(BaseModel):
         None,
         description="Tab autocomplete model",
         alias="tabAutocompleteModel",
+    )
+
+    tab_autocomplete_options: TabAutocompleteOptions | None = Field(
+        None,
+        description="Tab autocomplete options",
+        alias="tabAutocompleteOptions",
     )
 
     allow_anonymous_telemetry: bool = Field(
@@ -198,6 +256,11 @@ class ContinueDevProject(Document):
 
     config: ProjectConfig = Field(..., description="continue.dev project config")
 
+    invite_id: str = Field(default_factory=lambda: str(bson.ObjectId()), description="Invite ID")
+
+    NotFoundError = ProjectNotFound
+    DuplicateKeyError = exceptions.DuplicateKeyError
+
     @classmethod
     async def create_indexes(cls) -> None:
         """Create indexes for the model."""
@@ -212,14 +275,35 @@ class ContinueDevProject(Document):
     def all_for_user(cls, user: str) -> AsyncIterable[Self]:
         """Find all projects available for the user."""
 
-        query = {
-            "users": user,
-        }
+        query = {"$or": [{"users": user}, {"admin": user}]}
 
         return cls.all(add_query=query)
 
     @classmethod
-    async def one_by_name(cls, name: str) -> Self:
+    async def one_by_name(cls, name: str, required: bool = True) -> Self:
         """Find project by its name."""
 
-        return await cls.one(add_query={"name": name})
+        return await cls.one(add_query={"name": name}, required=required)
+
+    async def add_user(self, user_id: str):
+        """Add user to project."""
+
+        if user_id in self.users:
+            raise UserAlreadyInProject()
+
+        self.users.append(user_id)
+
+        await self.commit_changes(fields=["users"])
+
+    async def reset_invite_id(self):
+        """Set new invite id."""
+
+        self.invite_id = str(bson.ObjectId())
+
+        await self.commit_changes(fields=["invite_id"])
+
+    @classmethod
+    async def one_by_invite_id(cls, invite_id: str, required: bool = True) -> Self:
+        """Find one project by invite id."""
+
+        return await cls.one(add_query={"invite_id": invite_id}, required=required)
