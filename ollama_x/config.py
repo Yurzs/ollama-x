@@ -1,16 +1,16 @@
-import asyncio
 import logging
 from typing import Annotated, ClassVar, Literal
 
+import sentry_sdk
 from pydantic import AnyUrl, Field, UrlConstraints
 from pydantic_app_config import EnvAppConfig
 from pydantic_mongo_document import Document
 from pydantic_mongo_document.document import ReplicaConfig
 
-import ollama_x.model
-
 MongoURI = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 
+
+LOG = logging.getLogger(__name__)
 
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
@@ -31,6 +31,9 @@ def setup_document(conf: "OllamaXConfig") -> None:
         {
             "default": ReplicaConfig(
                 uri=conf.mongo_uri,
+                client_options={
+                    "serverSelectionTimeoutMS": 50,
+                },
             )
         }
     )
@@ -39,11 +42,14 @@ def setup_document(conf: "OllamaXConfig") -> None:
 async def ensure_indexes(conf: "OllamaXConfig") -> None:
     """Ensure indexes for all models."""
 
+    import ollama_x.model
+
     if conf.client_generation:
         return
 
     for model in ollama_x.model.__all__:
-        await getattr(ollama_x.model, model).create_indexes()
+        if isinstance(model, type) and issubclass(model, Document):
+            await getattr(ollama_x.model, model).create_indexes()
 
 
 def setup_log(conf: "OllamaXConfig") -> None:
@@ -52,10 +58,18 @@ def setup_log(conf: "OllamaXConfig") -> None:
     logging.basicConfig(level=LOG_LEVELS[conf.log_level.upper()])
 
 
+def setup_sentry(conf: "OllamaXConfig") -> None:
+    if conf.client_generation:
+        return
+
+    if conf.sentry_dsn:
+        sentry_sdk.init(conf.sentry_dsn)
+
+
 class OllamaXConfig(EnvAppConfig):
     """OllamaX app configuration."""
 
-    STARTUP: ClassVar = [setup_log, setup_document, ensure_indexes]
+    STARTUP: ClassVar = [setup_log, setup_document, ensure_indexes, setup_sentry]
 
     log_level: Literal[
         "DEBUG",
@@ -118,6 +132,18 @@ class OllamaXConfig(EnvAppConfig):
         default=False,
         description="Anonymous allowed flag",
         alias="ANONYMOUS_ALLOWED",
+    )
+
+    anonymous_model: str | None = Field(
+        None,
+        description="Enforced anonymous users model.",
+        alias="ANONYMOUS_MODEL",
+    )
+
+    sentry_dsn: str | None = Field(
+        default=None,
+        description="Sentry DSN",
+        alias="SENTRY_DSN",
     )
 
 
