@@ -4,11 +4,6 @@ version = "0.1.0"
 description = "Ollama Proxy Server with Extensions"
 authors = ["Yury Sokov (Yurzs) <me@yurzs.dev>"]
 readme = "README.md"
-packages = [
-    { include = "ollama_x", from = ".", to = "ollama_x" },
-    { include = "ollama_x_client", from = ".", to = "ollama_x_client"},
-]
-exclude = ["ollama_x"]
 license = "MIT"
 
 [tool.poetry.dependencies]
@@ -19,15 +14,20 @@ fastapi = ">=0.112,<1"
 pydantic-mongo-document = "^0.1.16"
 aiohttp = "^3.10.3"
 pydantic-app-config = {git = "https://github.com/Yurzs/pydantic-app-config.git"}
-openapi-python-client = "^0.21.2"
-openapi-cli = "^0.1.5"
 apscheduler = "^3.10.4"
 langfuse = "^2.43.3"
+email-validator = "^2.2.0"
+sentry-sdk = {extras = ["fastapi"], version = "^2.13.0"}
+openapi-cli = "^0.2"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
 black = "^24.8.0"
 autoflake = "^2.3.1"
+plumbum = "^1.8.3"
+ruff = "^0.6.2"
+openapi-cli = {extras = ["full"], version = "^0.2"}
+ollama-x-client = "^0.1.0"
 
 [tool.poetry.scripts]
 ollama-x = "openapi_cli.cli:main"
@@ -54,3 +54,16 @@ profile = "black"
 [tool.autoflake]
 remove_all_unused_imports = true
 remove_unused_variables = true
+in-place = true
+recursive = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[toll.ruff.format]
+docstring-code-format = true
+quote-style = "double"
+indent-style = "space"
