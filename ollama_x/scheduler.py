@@ -1,9 +1,7 @@
 import asyncio
 import datetime
 import logging
-import urllib.parse
 
-import aiohttp
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -49,25 +47,41 @@ async def check_api(server_id: str) -> None:
 
     server = await APIServer.one(server_id)
 
-    url = urllib.parse.urljoin(str(server.url), "/api/tags")
+    try:
+        response = await server.ollama_client.list_models()
+        if response.status == 200:
+            server.last_alive = datetime.datetime.now(utc)
 
-    async with aiohttp.ClientSession() as session:
+            data = await response.json()
+            server.models = data["models"]
+
+        else:
+            LOG.warning(f"Server {server.url} is inactive")
+
+        server.last_update = datetime.datetime.now(utc)
+
+        await server.commit_changes(fields=["last_alive", "last_update", "models"])
+    except Exception as e:
+        LOG.error(f"Error checking server {server.url}: {e}")
+
+
+async def check_running_models():
+    """Check running models on all servers."""
+
+    from ollama_x.model.server import APIServer
+
+    async for server in APIServer.all_active():
+        LOG.debug(f"Checking running models for {server.url}")
+
         try:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    server.last_alive = datetime.datetime.now(utc)
-
-                    data = await response.json()
-                    server.models = data["models"]
-
-                else:
-                    LOG.warning(f"Server {server.url} is inactive")
-
-                server.last_update = datetime.datetime.now(utc)
-
-                await server.commit_changes(fields=["last_alive", "last_update", "models"])
+            response = await server.ollama_client.list_running_models()
+            data = await response.json()
+            server.running_models = data["models"]
         except Exception as e:
-            LOG.error(f"Error checking server {server.url}: {e}")
+            LOG.error(f"Error checking running models for {server.url}: {e}")
+            server.running_models = []
+        finally:
+            await server.commit_changes(fields=["running_models"])
 
 
 def generate_job_id(server_id: str) -> str:
@@ -107,6 +121,14 @@ async def ensure_jobs():
         "interval",
         id="ping",
         seconds=1,
+    )
+
+    scheduler.add_job(
+        check_running_models,
+        "interval",
+        id="check_running_models",
+        seconds=config.server_check_interval,
+        next_run_time=datetime.datetime.now(utc) + datetime.timedelta(seconds=10),
     )
 
 
