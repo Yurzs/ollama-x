@@ -153,13 +153,17 @@ async def ollama_middleware(
     if request.url.path.startswith(("/api/chat", "/api/generate")):
         request_data = await request.json()
 
-        request.state.user = await authenticate(request)
+        if request.state.user is None:
+            request.state.user = await authenticate(request)
+
+        headers = dict(request.headers)
+        headers.update({"client_host": request.client.host})
 
         ollama = request.state.ollama = OllamaProxyMiddleware(
             action=request.url.path.split("/")[-1],
             request=request_data,
             user=request.state.user,
-            request_headers=dict(request.headers),
+            request_headers=headers,
         )
         ollama.model = lambda: request.state.model
 
