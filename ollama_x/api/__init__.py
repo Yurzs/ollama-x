@@ -1,8 +1,5 @@
-from .continue_dev import router as continue_dev_router
-from .proxy import router as proxy_router
-from .server import router as server_router
-from .user import router as user_router
+from . import continue_dev, proxy, server, user
 
-routers = [user_router, proxy_router, server_router, continue_dev_router]
+routers = [user.router, proxy.router, server.router, continue_dev.router]
 
 __all__ = ["routers"]

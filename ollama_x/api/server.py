@@ -1,24 +1,70 @@
 from fastapi import APIRouter
 
+from ollama_x.api.exceptions import AccessDenied, APIError
 from ollama_x.api.helpers import AdminUser
 from ollama_x.model import APIServer
 from ollama_x.model.server import ServerBase
 from ollama_x.scheduler import add_server_job, delete_server_job
 
-router = APIRouter(prefix="/server", tags=["server"])
+PREFIX = "server"
+
+router = APIRouter(prefix=f"/{PREFIX}", tags=[PREFIX])
 
 
-@router.get("/", operation_id="get-server", tags=["admin"])
-async def get_server(admin: AdminUser, server_id: str | None = None) -> list[APIServer] | APIServer:
+@router.get(
+    "/one",
+    operation_id=f"{PREFIX}.one",
+    tags=["admin"],
+    response_model=APIServer | APIError,
+    responses={
+        400: {
+            "model": APIError[APIServer.NotFoundError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
+async def get_server(admin: AdminUser, server_id: str) -> APIServer:
     """Get server."""
 
     if server_id:
         return await APIServer.one(server_id)
 
-    return [s async for s in APIServer.all()]
+    return await APIServer.one(server_id)
 
 
-@router.post("/", operation_id="create-server", tags=["admin"])
+@router.get(
+    "/all",
+    operation_id=f"{PREFIX}.all",
+    tags=["admin"],
+    response_model=list[APIServer] | APIError,
+    responses={
+        400: {
+            "model": APIError[APIServer.NotFoundError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
+async def get_servers(admin: AdminUser) -> list[APIServer]:
+    """Get servers."""
+
+    return [server async for server in APIServer.all()]
+
+
+@router.post(
+    "/create",
+    operation_id=f"{PREFIX}.create",
+    tags=["admin"],
+    response_model=APIServer | APIError,
+    responses={
+        400: {
+            "model": APIError[APIServer.DuplicateKeyError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
 async def create_server(admin: AdminUser, server: ServerBase) -> APIServer:
     """Create server."""
 
@@ -28,16 +74,48 @@ async def create_server(admin: AdminUser, server: ServerBase) -> APIServer:
     return server
 
 
-@router.put("/", operation_id="update-server", tags=["admin"])
-async def update_server(admin: AdminUser, server: APIServer) -> APIServer:
-    """Update server."""
+@router.put(
+    "/update",
+    operation_id=f"{PREFIX}.update",
+    tags=["admin"],
+    response_model=APIServer,
+    responses={
+        400: {
+            "model": APIError[APIServer.NotFoundError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
+async def update_server(
+    admin: AdminUser,
+    server_id: str,
+    server_url: str | None = None,
+) -> APIServer:
+    """Update server parameters."""
+
+    server = await APIServer.one(server_id)
+
+    server.url = server_url or server.url
 
     await server.commit_changes(fields=["url"])
 
     return server
 
 
-@router.delete("/", operation_id="delete-server", tags=["admin"])
+@router.delete(
+    "/",
+    operation_id=f"{PREFIX}.delete",
+    tags=["admin"],
+    response_model=APIServer,
+    responses={
+        400: {
+            "model": APIError[APIServer.NotFoundError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
 async def delete_server(admin: AdminUser, server_id: str) -> APIServer:
     """Delete server."""
 
@@ -47,3 +125,12 @@ async def delete_server(admin: AdminUser, server_id: str) -> APIServer:
     delete_server_job(server_id)
 
     return server
+
+
+@router.post("/{server_id:str}/pull")
+async def server_pull_model(server_id: str, model: str):
+    """Pull model to server."""
+
+    server = await APIServer.one(server_id)
+
+    return server.pull_model(model)

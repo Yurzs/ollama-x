@@ -1,18 +1,20 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 from ollama_x.api.exceptions import AccessDenied
 from ollama_x.api.security import security
-from ollama_x.model import Session, User
+from ollama_x.model import ContinueDevProject, Session, User
 
 
-def get_token(authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
+def get_token(
+    authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+) -> str:
     """Get token key from header."""
 
-    if authorization.scheme != "Bearer":
-        raise HTTPException(status_code=401, detail="Invalid token")
+    if authorization is None or authorization.scheme != "Bearer":
+        raise AccessDenied()
 
     return authorization.credentials
 
@@ -23,7 +25,7 @@ BearerToken = Annotated[str, Depends(get_token)]
 async def auth_user(token: BearerToken, request: Request) -> User:
     """Get user from token."""
 
-    if hasattr(request.state, "user"):
+    if getattr(request.state, "user", None) is not None:
         return request.state.user
 
     try:
@@ -43,9 +45,8 @@ async def admin_user(token: BearerToken, request: Request) -> User:
         if not await User.one(add_query={"is_admin": True}):
             await User.new(username="admin", key="admin", is_admin=True)
 
-    if hasattr(request.state, "user"):
-        if not request.state.user.is_admin:
-            raise AccessDenied()
+    if getattr(request.state, "user", None) is not None and not request.state.user.is_admin:
+        raise AccessDenied()
     else:
         try:
             request.state.user = await User.one_by_key(token, is_admin=True)
@@ -80,3 +81,39 @@ async def get_session(user: AuthorizedUser, request: Request):
 
 
 AISession = Annotated[Session, Depends(get_session)]
+
+
+async def continue_dev_auth(token: BearerToken, request: Request) -> ContinueDevProject:
+    """Authorize user using user_key:project_token"""
+
+    user_key, project_id = token.split(":", 1)
+
+    user = request.state.user = await User.one_by_key(user_key)
+    if user is None:
+        raise AccessDenied()
+
+    project = request.state.project = await ContinueDevProject.one(project_id)
+    if project is None:
+        raise AccessDenied()
+
+    if user.id not in project.users:
+        raise AccessDenied()
+
+    return project
+
+
+ContinueProject = Annotated[ContinueDevProject, Depends(continue_dev_auth)]
+
+
+async def is_project_admin(user: AuthorizedUser, project_id: str):
+    """Check if user is project admin."""
+
+    project = await ContinueDevProject.one(project_id)
+
+    if not user.is_admin and user.username != project.admin:
+        raise AccessDenied()
+
+    return project
+
+
+ProjectWithAdminAccess = Annotated[ContinueDevProject, Depends(is_project_admin)]

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 
 from ollama_x.api.exceptions import NoServerAvailable
-from ollama_x.api.helpers import AISession, AuthorizedUser
+from ollama_x.api.helpers import AISession
 from ollama_x.config import config
 from ollama_x.model import APIServer
 
@@ -182,7 +182,7 @@ async def generate_embeddings(request: Request):
     """Generate embeddings."""
 
     data = await request.json()
-    request.state.model = data["name"]
+    request.state.model = data["model"]
 
     server = await get_min_queue_server(request.state.model)
     if server is None:
@@ -198,7 +198,12 @@ async def proxy(session: AISession, request: Request):
 
     request_data = await request.json()
 
-    request.state.model = config.enforce_model or request_data["model"]
+    if request.state.user.is_guest:
+        request.state.model = (
+            config.anonymous_model or config.enforce_model or request_data["model"]
+        )
+    else:
+        request.state.model = config.enforce_model or request_data["model"]
 
     server = await get_min_queue_server(request.state.model)
     if server is None:

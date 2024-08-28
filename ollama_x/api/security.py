@@ -1,6 +1,7 @@
 from fastapi import HTTPException, Request
 from fastapi.security import APIKeyHeader, HTTPBearer
 
+from ollama_x.api.exceptions import AccessDenied
 from ollama_x.config import config
 from ollama_x.model import User
 
@@ -12,22 +13,29 @@ header_scheme = APIKeyHeader(
 )
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
-async def authenticate(request: Request) -> User:
+async def authenticate(request: Request, anonymous_allowed: bool = True) -> User:
     """Authenticate request."""
 
     authorization = await security(request)
+    if authorization is None:
+        raise AccessDenied()
 
-    if authorization.scheme != "Bearer" and not config.anonymous_allowed:
+    anonymous_allowed = anonymous_allowed and config.anonymous_allowed
+
+    if authorization.scheme != "Bearer" and not anonymous_allowed:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    if authorization.credentials == "undefined" and config.anonymous_allowed:
+    if authorization.credentials == "undefined" and anonymous_allowed:
         return User(
             _id="guest",
             username="guest",
             key=User.generate_key(),
         )
 
-    return await User.one_by_key(authorization.credentials)
+    try:
+        return await User.one_by_key(authorization.credentials)
+    except User.NotFoundError:
+        raise AccessDenied()

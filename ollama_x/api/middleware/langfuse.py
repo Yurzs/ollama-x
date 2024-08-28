@@ -12,7 +12,6 @@ LOG = logging.getLogger(__name__)
 
 
 class LangfuseMiddleware(BaseModel):
-
     ollama: OllamaProxyMiddleware | None = Field(None, description="Ollama proxy middleware")
 
     @observe(as_type="generation")
@@ -51,6 +50,8 @@ class LangfuseMiddleware(BaseModel):
 
     @observe(name="pending-request")
     async def observe(self):
+        """Observe ollama proxy request."""
+
         try:
             session = await self.ollama.get_session()
 
