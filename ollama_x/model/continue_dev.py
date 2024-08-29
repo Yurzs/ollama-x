@@ -307,3 +307,40 @@ class ContinueDevProject(Document):
         """Find one project by invite id."""
 
         return await cls.one(add_query={"invite_id": invite_id}, required=required)
+
+    def personalize(
+        self,
+        user: "User",
+        base_url: str,
+    ) -> Self:
+        """Personalize project with auth info."""
+
+        project = self.model_copy()
+
+        auth_headers = {
+            "Authorization": f"Bearer {user.key.get_secret_value()}",
+            "ContinueDevProject": self.id,
+        }
+
+        api_base = base_url.replace("http://", "https://")
+
+        # add auth to models
+        for model in project.config.models:
+            model.title = project.name
+            model.api_base = api_base
+            model.request_options.headers.update(auth_headers)
+
+        # add embeddings
+        if project.config.embeddings_provider is not None:
+            project.config.embeddings_provider.provider = "ollama"
+            project.config.embeddings_provider.api_base = api_base
+            project.config.embeddings_provider.request_options.headers.update(auth_headers)
+
+        # add auth to tab completions
+        if project.config.tab_autocomplete_model is not None:
+            project.config.tab_autocomplete_model.title = project.name
+            project.config.tab_autocomplete_model.provider = "ollama"
+            project.config.tab_autocomplete_model.api_base = api_base
+            project.config.tab_autocomplete_model.request_options.headers.update(auth_headers)
+
+        return project

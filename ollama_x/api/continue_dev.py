@@ -35,42 +35,6 @@ DEFAULT_RESPONSES = {
 }
 
 
-def prepare_project(
-    user: AuthorizedUser,
-    project: ContinueDevProject,
-    request: Request,
-) -> ContinueDevProject:
-    """Adds dynamic fields to project model."""
-
-    auth_headers = {
-        "Authorization": f"Bearer {user.key.get_secret_value()}",
-        "ContinueDevProject": project.id,
-    }
-
-    api_base = str(request.base_url).replace("http://", "https://")
-
-    # add auth to models
-    for model in project.config.models:
-        model.title = project.name
-        model.api_base = api_base
-        model.request_options.headers.update(auth_headers)
-
-    # add embeddings
-    if project.config.embeddings_provider is not None:
-        project.config.embeddings_provider.provider = "ollama"
-        project.config.embeddings_provider.api_base = api_base
-        project.config.embeddings_provider.request_options.headers.update(auth_headers)
-
-    # add auth to tab completions
-    if project.config.tab_autocomplete_model is not None:
-        project.config.tab_autocomplete_model.title = project.name
-        project.config.tab_autocomplete_model.provider = "ollama"
-        project.config.tab_autocomplete_model.api_base = api_base
-        project.config.tab_autocomplete_model.request_options.headers.update(auth_headers)
-
-    return project
-
-
 @router.get(
     "/all",
     operation_id=f"{PREFIX}.all",
@@ -84,7 +48,7 @@ async def list_projects(user: AuthorizedUser, request: Request):
 
     projects = []
     async for project in ContinueDevProject.all_for_user(user.id):
-        projects.append(prepare_project(user, project, request))
+        projects.append(project.personalize(user, str(request.base_url)))
 
     return projects
 
@@ -100,7 +64,7 @@ async def get_project(user: AuthorizedUser, project_name: str, request: Request)
     """Get information about single continue.dev project."""
 
     project = await ContinueDevProject.one_by_name(project_name)
-    return prepare_project(user, project, request)
+    return project.personalize(user, str(request.base_url))
 
 
 class CreateProjectRequest(ContinueDevProject):
@@ -178,10 +142,10 @@ class ContinueConfig(BaseModel):
 async def get_config(project: ContinueProject, request: Request):
     """Get project config."""
 
-    prepare_project(request.state.user, project, request)
-
     return ContinueConfig(
-        config_json=project.config.model_dump_json(by_alias=True, exclude_none=True)
+        config_json=project.personalize(
+            request.state.user, str(request.base_url)
+        ).config.model_dump_json(by_alias=True, exclude_none=True)
     )
 
 
