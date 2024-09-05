@@ -18,6 +18,7 @@ async def default_middleware(
     request.state.model = None
     request.state.ollama = None
     request.state.project = None
+    request.state.path = str(request.url.path)
 
     result = await call_next(request)
 

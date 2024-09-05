@@ -3,7 +3,7 @@ from typing import Any, Self
 
 import pymongo
 from pydantic import Field
-from pydantic_mongo_document import Document
+from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
 
