@@ -1,8 +1,8 @@
-from . import continue_dev, openai, proxy, refact, server, user
+from . import continue_dev, ollama, openai, refact, server, user
 
 routers = [
     user.router,
-    proxy.router,
+    ollama.router,
     server.router,
     continue_dev.router,
     refact.router,
