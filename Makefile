@@ -10,6 +10,5 @@ publish:
 		.
 
 format:
-	@poetry run autoflake .
-	@poetry run isort .
-	@poetry run black .
+	@poetry run ruff format
+	@poetry run ruff check --fix

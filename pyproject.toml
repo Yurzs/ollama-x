@@ -38,28 +38,20 @@ ollama-x-scheduler = "ollama_x.scheduler:main"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 100
-
-[tool.black]
-line_length = 100
-target_version = ["py312"]
-
-[tool.pylint]
-target_versions = ["py312"]
-max-line-length = 100
-profile = "black"
-
-[tool.autoflake]
-remove_all_unused_imports = true
-remove_unused_variables = true
-in-place = true
-recursive = true
-
 [tool.ruff]
 line-length = 100
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["B"]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -68,3 +60,6 @@ ban-relative-imports = "all"
 docstring-code-format = true
 quote-style = "double"
 indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-line-length = 100
