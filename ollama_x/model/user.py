@@ -6,7 +6,8 @@ from typing import Annotated, ClassVar, Self
 import pymongo
 import pymongo.errors
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
-from pydantic_mongo_document import Document, DocumentNotFound
+from pydantic_mongo_document import DocumentNotFound
+from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
 

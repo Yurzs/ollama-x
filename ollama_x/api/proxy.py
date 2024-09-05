@@ -1,6 +1,5 @@
 import asyncio
 import dataclasses
-import json
 import math
 from asyncio import Semaphore
 from collections import defaultdict
@@ -11,12 +10,13 @@ import aiohttp
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 
+from ollama_x.api import endpoints
 from ollama_x.api.exceptions import NoServerAvailable
 from ollama_x.api.helpers import AISession
 from ollama_x.config import config
-from ollama_x.model import APIServer
+from ollama_x.model import APIServer, OllamaModel
 
-router = APIRouter(prefix="/api", tags=["proxy"])
+router = APIRouter(tags=["ollama"])
 
 queues: dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
 
@@ -47,11 +47,10 @@ class QueueHandler:
     def get(cls, server_url: str) -> Self:
         """Get queue handler."""
 
-        if server_url in cls.QUEUES:
-            return cls.QUEUES[server_url]
-        else:
+        if server_url not in cls.QUEUES:
             cls.QUEUES[server_url] = cls(server_url)
-            return cls.QUEUES[server_url]
+
+        return cls.QUEUES[server_url]
 
     def __init__(self, server_url: str) -> None:
         self.server_url: str = server_url
@@ -78,8 +77,7 @@ async def get_min_queue_server(model: str | None) -> APIServer | None:
     min_queue = (None, math.inf)
 
     async for server in APIServer.all_active(model_name=model):
-        queue = QueueHandler.get(server.url).queue
-        queue_size = queue.qsize()
+        queue_size = QueueHandler.get(server.url).queue.qsize()
 
         if queue_size < min_queue[1]:
             min_queue = (server, queue_size)
@@ -96,7 +94,7 @@ def stream_response(request: Request, server: APIServer) -> StreamingResponse:
         async with aiohttp.ClientSession(base_url=str(server.url)) as session:
             method = getattr(session, request.method.lower())
             async with method(
-                request.url.path,
+                request.state.path,
                 json=data,
             ) as response:
                 async for chunk in response.content:
@@ -117,29 +115,14 @@ async def proxy_request(server: APIServer, request: Request) -> StreamingRespons
     data = await request.json()
     data["model"] = request.state.model
 
-    if data is not None and data.get("stream", True):
-        return stream_response(request, server)
-
-    async with aiohttp.ClientSession(base_url=str(server.url)) as session:
-        method = getattr(session, request.method.lower())
-        async with method(
-            request.url.path,
-            json=data,
-        ) as response:
-            return Response(
-                headers=dict(response.headers),
-                content=json.dumps(await response.json()).encode(),
-            )
+    return stream_response(request, server)
 
 
 async def proxy_queue_request(semaphore: Semaphore, queue_request: QueueRequest) -> None:
     """Proxy request to APIServer."""
 
-    request = queue_request.request
-    server = queue_request.server
-
     try:
-        result = await proxy_request(server, request)
+        result = await proxy_request(queue_request.server, queue_request.request)
     except Exception as e:
         queue_request.set_exception(e)
     else:
@@ -148,36 +131,47 @@ async def proxy_queue_request(semaphore: Semaphore, queue_request: QueueRequest)
         semaphore.release()
 
 
-@router.get("/tags", include_in_schema=False)
-async def get_tags():
-    """Get tags from all servers."""
-
+async def get_models() -> dict[str, Any]:
     models = {}
 
     async for server in APIServer.all_active():
         for model in server.models:
             models[model["model"]] = model
 
+    return models
+
+
+async def get_running_models() -> list[str]:
+    """List all running models."""
+
+    models = set()
+
+    async for server in APIServer.all_active():
+        models.update([model["model"] for model in server.running_models])
+
+    return list(models)
+
+
+@router.get(endpoints.OLLAMA_TAGS, include_in_schema=False)
+async def get_tags():
+    """Get tags from all servers."""
+
+    models = await get_models()
+
     return {"models": list(models.values())}
 
 
-@router.post("/show", include_in_schema=False)
-async def show_model(request: Request):
+@router.post(endpoints.OLLAMA_SHOW, include_in_schema=False)
+async def show_model(request: Request) -> OllamaModel:
     """Proxy show request."""
 
     data = await request.json()
-    request.state.model = data["name"]
 
-    server = await get_min_queue_server(request.state.model)
-
-    if server is None:
-        raise NoServerAvailable()
-
-    return await proxy_request(server, request)
+    return await OllamaModel.one(data["name"])
 
 
-@router.post("/embed", include_in_schema=False)
-@router.post("/embeddings", include_in_schema=False)
+@router.post(endpoints.OLLAMA_EMBEDDINGS, include_in_schema=False)
+@router.post(endpoints.OLLAMA_LEGACY_EMBEDDINGS, include_in_schema=False)
 async def generate_embeddings(request: Request):
     """Generate embeddings."""
 
@@ -191,10 +185,15 @@ async def generate_embeddings(request: Request):
     return await proxy_request(server, request)
 
 
-@router.post("/chat", include_in_schema=False)
-@router.post("/generate", include_in_schema=False)
+@router.post(endpoints.OLLAMA_CHAT, include_in_schema=False)
+@router.post(endpoints.OLLAMA_LEGACY_CHAT, include_in_schema=False)
+@router.post(endpoints.OLLAMA_COMPLETIONS, include_in_schema=False)
+@router.post(endpoints.OLLAMA_LEGACY_COMPLETIONS, include_in_schema=False)
 async def proxy(session: AISession, request: Request):
     """Proxy generate request."""
+
+    if request.url.path.startswith("/ollama"):
+        request.state.path = request.url.path[8:]
 
     request_data = await request.json()
 
@@ -208,6 +207,13 @@ async def proxy(session: AISession, request: Request):
     server = await get_min_queue_server(request.state.model)
     if server is None:
         raise NoServerAvailable()
+
+    model_names = [model["model"] for model in server.models]
+    if request.state.model not in model_names:
+        for model in server.models:
+            if model["model"].startswith(request.state.model):
+                request.state.model = model["model"]
+                break
 
     queue_request = QueueRequest(server, request)
     queue = QueueHandler.get(server.url).queue

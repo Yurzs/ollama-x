@@ -11,7 +11,7 @@ python = "^3.12"
 pydantic = ">=2.8.2,<3"
 uvicorn = ">=0.30,<1"
 fastapi = ">=0.112,<1"
-pydantic-mongo-document = "^0.1.16"
+pydantic-mongo-document = {version = ">=0.2", extras = ["asyncio"]}
 aiohttp = "^3.10.3"
 pydantic-app-config = {git = "https://github.com/Yurzs/pydantic-app-config.git"}
 apscheduler = "^3.10.4"
@@ -19,6 +19,7 @@ langfuse = "^2.43.3"
 email-validator = "^2.2.0"
 sentry-sdk = {extras = ["fastapi"], version = "^2.13.0"}
 openapi-cli = "^0.2"
+sse-starlette = "^2.1.3"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"

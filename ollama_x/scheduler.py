@@ -8,6 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import utc
 
 from ollama_x.config import config
+from ollama_x.model import APIServer, OllamaModel
 
 LOG = logging.getLogger(__name__)
 
@@ -48,21 +49,23 @@ async def check_api(server_id: str) -> None:
     server = await APIServer.one(server_id)
 
     try:
-        response = await server.ollama_client.list_models()
-        if response.status == 200:
-            server.last_alive = datetime.datetime.now(utc)
+        async with server.ollama_client.list_models() as response:
+            if response.status == 200:
+                server.last_alive = datetime.datetime.now(utc)
 
-            data = await response.json()
-            server.models = data["models"]
+                data = await response.json()
+                server.models = data["models"]
 
-        else:
-            LOG.warning(f"Server {server.url} is inactive")
+                await asyncio.create_task(save_models_info(server))
 
-        server.last_update = datetime.datetime.now(utc)
+            else:
+                LOG.warning(f"Server {server.url} is inactive")
 
-        await server.commit_changes(fields=["last_alive", "last_update", "models"])
+            server.last_update = datetime.datetime.now(utc)
+
+            await server.commit_changes(fields=["last_alive", "last_update", "models"])
     except Exception as e:
-        LOG.error(f"Error checking server {server.url}: {e}")
+        LOG.exception(f"Error checking server {server.url}", e)
 
 
 async def check_running_models():
@@ -74,14 +77,38 @@ async def check_running_models():
         LOG.debug(f"Checking running models for {server.url}")
 
         try:
-            response = await server.ollama_client.list_running_models()
-            data = await response.json()
-            server.running_models = data["models"]
+            async with server.ollama_client.list_running_models() as response:
+                data = await response.json()
+                server.running_models = data["models"]
         except Exception as e:
             LOG.error(f"Error checking running models for {server.url}: {e}")
             server.running_models = []
         finally:
             await server.commit_changes(fields=["running_models"])
+
+
+async def save_models_info(server: APIServer) -> None:
+    """Store model info in the database."""
+
+    for model_base in server.models:
+        if not await OllamaModel.find_one(
+            model_base["model"],
+            model_base["digest"],
+            required=False,
+        ):
+            async with server.ollama_client.show_model_info(
+                model_base["model"],
+                verbose=True,
+            ) as response:
+                data = await response.json()
+
+                model = await OllamaModel.create_or_update(
+                    model_base["model"],
+                    data,
+                    model_base["digest"],
+                )
+
+                LOG.info(f"Saved `{model.id}` model info.")
 
 
 def generate_job_id(server_id: str) -> str:

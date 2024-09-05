@@ -1,10 +1,10 @@
-from collections.abc import AsyncIterable
 from typing import Generic, Literal, Self, TypeVar, Union
 
 import bson
 import pymongo
 from pydantic import BaseModel, Field, HttpUrl
-from pydantic_mongo_document import Document
+from pydantic_mongo_document.cursor import Cursor
+from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
 
@@ -38,8 +38,8 @@ class ModelRequestOptions(BaseModel):
 
 
 class Model(BaseModel, Generic[P]):
-    model: str = Field("AUTODETECT", description="Model name")
-    title: str = Field("Model", description="Model title")
+    model: str = Field("AUTODETECT", description="OllamaModel name")
+    title: str = Field("OllamaModel", description="OllamaModel title")
     provider: P = Field("ollama", description="Provider")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
     api_base: HttpUrl | None = Field(None, description="OAPI base", alias="apiBase")
@@ -83,9 +83,9 @@ class BaseCompletionOptions(BaseModel):
 
 
 class TabAutocompleteModel(BaseModel):
-    title: str = Field("ollama", description="Model title")
+    title: str = Field("ollama", description="OllamaModel title")
     provider: Literal["ollama"] = Field("ollama", description="Provider")
-    model: str = Field(description="Model name")
+    model: str = Field(description="OllamaModel name")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
     api_base: HttpUrl | None = Field(None, description="API base", alias="apiBase")
     context_length: int | None = Field(None, description="Context length", alias="contextLength")
@@ -135,7 +135,7 @@ class TabAutocompleteOptions(BaseModel):
 
 class EmbeddingsProvider(BaseModel):
     provider: Literal["ollama"] = Field("ollama", description="Provider name")
-    model: str | None = Field(None, description="Model name")
+    model: str | None = Field(None, description="OllamaModel name")
     api_base: HttpUrl | None = Field(None, description="API base", alias="apiBase")
     api_key: str | None = Field(None, description="API key", alias="apiKey")
     request_options: RequestOptions = Field(
@@ -272,7 +272,7 @@ class ContinueDevProject(Document):
         )
 
     @classmethod
-    def all_for_user(cls, user: str) -> AsyncIterable[Self]:
+    def all_for_user(cls, user: str) -> Cursor[Self]:
         """Find all projects available for the user."""
 
         query = {"$or": [{"users": user}, {"admin": user}]}

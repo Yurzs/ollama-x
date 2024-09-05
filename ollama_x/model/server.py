@@ -4,7 +4,8 @@ from typing import Any, Self
 
 import pymongo
 from pydantic import BaseModel, Field, HttpUrl
-from pydantic_mongo_document import Document, DocumentNotFound
+from pydantic_mongo_document import DocumentNotFound
+from pydantic_mongo_document.document.asyncio import Document
 from pytz import utc
 
 from ollama_x.client import OllamaClient
@@ -57,7 +58,15 @@ class APIServer(Document, ServerBase):
     @classmethod
     async def create_indexes(cls) -> None:
         await cls.collection().create_index([("url", pymongo.ASCENDING)], unique=True)
-        await cls.collection().create_index([("model.name", pymongo.TEXT)])
+        await cls.collection().create_index(
+            [
+                ("model.name", pymongo.TEXT),
+                ("running_models.model", pymongo.TEXT),
+            ]
+        )
+        await cls.collection().create_index(
+            [("running_models.expires_at", pymongo.ASCENDING)],
+        )
 
     @classmethod
     def all_active(cls, model_name: str = None) -> AsyncIterable[Self]:
@@ -70,7 +79,18 @@ class APIServer(Document, ServerBase):
         }
 
         if model_name is not None:
-            query["models.name"] = {"$regex": f"^{model_name}"}
+            model, *version = model_name.split(":", 1)
+            if not version:
+                version_regex = "(:latest)?"
+            else:
+                version_regex = rf":{version}"
+
+            model_regex = rf"{model}{version_regex}"
+
+            query["$or"] = [
+                {"models.name": {"$regex": model_regex}},
+                {"running_models.model": {"$regex": model_regex}},
+            ]
 
         return cls.all(add_query=query)
 

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from openapi_cli.separator import CLI_SEPARATOR
 from pydantic import BaseModel, ConfigDict, Field
 
+from ollama_x.api import endpoints
 from ollama_x.api.exceptions import AccessDenied, APIError
 from ollama_x.api.helpers import (
     AuthorizedUser,
@@ -23,7 +24,7 @@ from ollama_x.model.user import UserNotFound
 PREFIX = "continue.dev"
 EDIT_COMMAND = f"{PREFIX}.edit.{CLI_SEPARATOR}"
 
-router = APIRouter(prefix=f"/{PREFIX}", tags=[PREFIX])
+router = APIRouter(tags=[endpoints.CONTINUE])
 
 
 DEFAULT_RESPONSES = {
@@ -36,7 +37,7 @@ DEFAULT_RESPONSES = {
 
 
 @router.get(
-    "/all",
+    endpoints.CONTINUE_ALL,
     operation_id=f"{PREFIX}.all",
     response_model_exclude_none=True,
     response_model_exclude_unset=True,
@@ -54,7 +55,7 @@ async def list_projects(user: AuthorizedUser, request: Request):
 
 
 @router.get(
-    "/one",
+    endpoints.CONTINUE_ONE,
     operation_id=f"{PREFIX}.one",
     response_model_exclude_none=True,
     response_model=ContinueDevProject,
@@ -72,7 +73,7 @@ class CreateProjectRequest(ContinueDevProject):
 
 
 @router.post(
-    "/",
+    endpoints.CONTINUE_CREATE,
     operation_id=f"{PREFIX}.create",
     response_model_exclude_none=True,
     summary="Create new continue.dev project.",
@@ -99,7 +100,7 @@ class JoinResult(BaseModel):
 
 
 @router.get(
-    "/join/{invite_id}",
+    endpoints.CONTINUE_PROJECT_JOIN,
     operation_id=f"{PREFIX}.join",
     response_model=JoinResult | APIError,
     responses=merge_responses(
@@ -132,7 +133,7 @@ class ContinueConfig(BaseModel):
 
 
 @router.get(
-    "/sync",
+    endpoints.CONTINUE_SYNC_CONFIG,
     summary="Get project config.",
     operation_id=f"{PREFIX}.sync",
     response_model_exclude_none=True,
@@ -168,7 +169,7 @@ async def reset_invite_id(project_id: str):
 
 
 @router.patch(
-    "/project/{project_id}/models",
+    endpoints.CONTINUE_EDIT_MODELS,
     response_model=ContinueDevProject | APIError,
     operation_id=f"{EDIT_COMMAND}.models",
     response_model_exclude_none=True,
@@ -188,7 +189,7 @@ async def edit_models(project: ProjectWithAdminAccess, models: list[AllModels] |
 
 
 @router.patch(
-    "/project/{project_id}/embeddings",
+    endpoints.CONTINUE_EDIT_EMBEDDINGS,
     operation_id=f"{EDIT_COMMAND}.embeddings",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
@@ -207,7 +208,7 @@ async def edit_embeddings(
 
 
 @router.patch(
-    "/project/{project_id}/tab-autocomplete-model",
+    endpoints.CONTINUE_EDIT_TAB_AUTOCOMPLETE_MODEL,
     operation_id=f"{EDIT_COMMAND}.tab_autocomplete_model",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
@@ -226,7 +227,7 @@ async def edit_tab_autocomplete_model(
 
 
 @router.patch(
-    "/project/{project_id}/tab-autocomplete-options",
+    endpoints.CONTINUE_EDIT_TAB_AUTOCOMPLETE_OPTIONS,
     operation_id=f"{EDIT_COMMAND}.tab_autocomplete_options",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
@@ -245,7 +246,7 @@ async def edit_tab_autocomplete_options(
 
 
 @router.patch(
-    "/project/{project_id}/context-providers",
+    endpoints.CONTINUE_EDIT_CONTEXT_PROVIDERS,
     operation_id=f"{EDIT_COMMAND}.context_providers",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,

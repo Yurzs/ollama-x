@@ -4,8 +4,10 @@ from typing import Annotated, ClassVar, Literal
 import sentry_sdk
 from pydantic import AnyUrl, Field, UrlConstraints
 from pydantic_app_config import EnvAppConfig
-from pydantic_mongo_document import Document
-from pydantic_mongo_document.document import ReplicaConfig
+from pydantic_mongo_document import ReplicaConfig
+from pydantic_mongo_document.document.asyncio import Document
+
+from ollama_x.types import OllamaModel
 
 MongoURI = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
 
@@ -48,8 +50,9 @@ async def ensure_indexes(conf: "OllamaXConfig") -> None:
         return
 
     for model in ollama_x.model.__all__:
+        model = getattr(ollama_x.model, model)
         if isinstance(model, type) and issubclass(model, Document):
-            await getattr(ollama_x.model, model).create_indexes()
+            await model.create_indexes()
 
 
 def setup_log(conf: "OllamaXConfig") -> None:
@@ -144,6 +147,24 @@ class OllamaXConfig(EnvAppConfig):
         default=None,
         description="Sentry DSN",
         alias="SENTRY_DSN",
+    )
+
+    default_embeddings_model: OllamaModel | None = Field(
+        default="nomic-embed-text:latest",
+        description="Default embeddings model",
+        alias="DEFAULT_EMBEDDINGS_MODEL",
+    )
+
+    default_completions_model: OllamaModel | None = Field(
+        default="deepseek-coder-v2:latest",
+        description="Default model completions",
+        alias="DEFAULT_COMPLETIONS_MODEL",
+    )
+
+    default_chat_model: OllamaModel | None = Field(
+        default="deepseek-coder-v2:latest",
+        description="Default model completions",
+        alias="DEFAULT_CHAT_MODEL",
     )
 
 
