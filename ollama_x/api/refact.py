@@ -3,12 +3,12 @@ from starlette.responses import JSONResponse
 
 from ollama_x import types
 from ollama_x.api import endpoints
-from ollama_x.api.proxy import get_models, get_running_models
+from ollama_x.api.ollama import get_models, get_running_models
 from ollama_x.config import config
 from ollama_x.model import OllamaModel
 from ollama_x.model.refact import ModelRecord, RefactCodeAssistantCaps
 
-router = APIRouter(prefix="/refact", tags=["refact"])
+router = APIRouter(tags=["refact"])
 
 
 async def get_caps(models):
