@@ -1,17 +1,16 @@
 import json
 import time
-from typing import Any, AsyncIterable, AsyncIterator, Generic
+from typing import Any, AsyncIterable, AsyncIterator, Generic, TypeVar
 
 import bson
 from fastapi import APIRouter, Request
-from mypyc.ir.ops import TypeVar
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse, ServerSentEvent
 from starlette.responses import JSONResponse, StreamingResponse
 
 from ollama_x.api import endpoints
 from ollama_x.api.exceptions import APIError
-from ollama_x.client import InnerClient
+from ollama_x.client.inner import InnerClient
 from ollama_x.model.openai import OpenAICompletionMessage
 
 M = TypeVar("M", bound=BaseModel)
@@ -31,7 +30,6 @@ def format_ollama_chat_completion(
     is_chunk: bool = False,
     stream_id: None | str = None,
 ) -> OpenAICompletionMessage | dict[str, Any]:
-
     if "error" in message:
         return message
 
@@ -47,7 +45,6 @@ class OpenAIEvent(BaseModel):
 async def stream_chucks(
     messages: AsyncIterable, sse: bool = False
 ) -> AsyncIterator[SSEMessage[OpenAICompletionMessage] | OpenAICompletionMessage]:
-
     event_id = int(time.time())
     stream_id = f"chatcmpl-{bson.ObjectId()}"
 
@@ -81,7 +78,9 @@ CompletionResponse = (
 @router.post(endpoints.OPENAI_CHAT, response_model=CompletionResponse)
 @router.post(endpoints.OPENAI_LEGACY_CHAT, response_model=CompletionResponse)
 @router.post(endpoints.OPENAI_CHAT_COMPLETIONS, response_model=CompletionResponse)
-@router.post(endpoints.OPENAI_LEGACY_CHAT_COMPLETIONS, response_model=CompletionResponse)
+@router.post(
+    endpoints.OPENAI_LEGACY_CHAT_COMPLETIONS, response_model=CompletionResponse
+)
 async def openai_chat(request: Request):
     """Proxy OpenAI completions request."""
 

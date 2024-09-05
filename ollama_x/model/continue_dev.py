@@ -1,3 +1,4 @@
+import typing
 from typing import Generic, Literal, Self, TypeVar, Union
 
 import bson
@@ -8,7 +9,11 @@ from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
 
-P = TypeVar("P", bound="Provider")
+if typing.TYPE_CHECKING:
+    from ollama_x.model.user import User
+
+
+P = TypeVar("P", bound="Literal[str]")
 C = TypeVar("C")
 X = TypeVar("X")
 

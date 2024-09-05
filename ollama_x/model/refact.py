@@ -2,6 +2,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from ollama_x.model import OllamaModel
+
+
 PASSTHROUGH = {
     "default_system_message": "You are a coding assistant that outputs short answers, gives links to documentation."
 }
@@ -16,7 +19,7 @@ class ModelRecord(BaseModel):
     supports_tools: bool = False
 
     @classmethod
-    def from_model(cls, model: "OllamaModel"):
+    def from_model(cls, model: OllamaModel):
         arch = model.info["general.architecture"]
 
         return cls(

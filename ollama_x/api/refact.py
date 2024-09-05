@@ -19,7 +19,7 @@ async def get_caps(models):
         endpoint_template=endpoints.OPENAI_CHAT_COMPLETIONS,
         endpoint_chat_passthrough=endpoints.OPENAI_CHAT,
         endpoint_style="openai",
-        tokenizer_path_template=f"/openai/v1/model/$MODEL/tokenizer.json",
+        tokenizer_path_template="/openai/v1/model/$MODEL/tokenizer.json",
         code_completion_default_model=config.default_completions_model,
         code_completion_n_ctx=2048,
         code_chat_default_model=config.default_chat_model,

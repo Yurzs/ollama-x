@@ -8,8 +8,9 @@ from pydantic_mongo_document import DocumentNotFound
 from pydantic_mongo_document.document.asyncio import Document
 from pytz import utc
 
-from ollama_x.client import OllamaClient
 from ollama_x.model import exceptions
+
+from ollama_x.client.ollama import OllamaClient
 
 
 class ServerNotFound(DocumentNotFound):
@@ -52,7 +53,7 @@ class APIServer(Document, ServerBase):
     )
 
     @property
-    def ollama_client(self) -> OllamaClient:
+    def ollama_client(self) -> "OllamaClient":
         return OllamaClient(self.url)
 
     @classmethod
