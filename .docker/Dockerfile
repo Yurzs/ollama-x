@@ -13,10 +13,11 @@ COPY pyproject.toml poetry.toml ./
 
 # Copy the rest of the files
 COPY ollama_x ollama_x
-COPY ollama_x_client ollama_x_client
 COPY README.md .
 
 # Install the dependencies
 RUN poetry install
 
-CMD ["poetry", "run", "python", "-m", "uvicorn", "ollama_x.app:app", "--host", "0.0.0.0"]
+ENTRYPOINT ["poetry", "run"]
+
+CMD ["python", "-m", "uvicorn", "ollama_x.app:app", "--host", "0.0.0.0"]

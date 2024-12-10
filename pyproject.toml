@@ -28,7 +28,6 @@ autoflake = "^2.3.1"
 plumbum = "^1.8.3"
 ruff = "^0.6.2"
 openapi-cli = {extras = ["full"], version = "^0.2"}
-ollama-x-client = "^0.1.0"
 
 [tool.poetry.scripts]
 ollama-x = "openapi_cli.cli:main"

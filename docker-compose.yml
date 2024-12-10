@@ -29,7 +29,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017
       SENTRY_DSN: ${SENTRY_DSN}
-    command: ["poetry", "run", "ollama-x-scheduler"]
+    command: ["ollama-x-scheduler"]
   mongo:
     container_name: ${PROJECT_NAME}-mongo
     image: mongo:latest

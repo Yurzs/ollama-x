@@ -78,18 +78,18 @@ async def get_all_users(admin: AdminUser) -> list[User]:
         }
     },
 )
-async def create_user(admin: AdminUser, user: CreateUserRequest) -> UserBase:
+async def create_user(admin: AdminUser, username: str, is_admin: bool = False) -> UserBase:
     """Create new user."""
 
     return UserBase.from_document(
-        await User.new(username=user.username, is_admin=user.is_admin),
+        await User.new(username=username, is_admin=is_admin),
         exclude_secrets=False,
     )
 
 
 @router.delete(
     "/",
-    operation_id=f"{PREFIX}.-delete",
+    operation_id=f"{PREFIX}.delete",
     summary="Delete user",
     tags=["admin"],
     response_model=User | APIError,

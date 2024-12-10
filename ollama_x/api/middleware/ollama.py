@@ -9,6 +9,7 @@ from typing import Any, Callable, Coroutine
 
 from fastapi import Request, Response
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from starlette.middleware.base import _StreamingResponse  # noqa
 from starlette.responses import StreamingResponse
 
 from ollama_x.api.security import authenticate
@@ -173,7 +174,7 @@ async def ollama_middleware(
         if response.status_code != 200:
             ollama.is_done.set_result(False)
 
-        elif isinstance(response, StreamingResponse):
+        elif isinstance(response, (_StreamingResponse, StreamingResponse)):
             response.body_iterator = ollama.listen_stream(response.body_iterator)
         else:
             ollama.response = response.body

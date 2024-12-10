@@ -21,7 +21,7 @@ from ollama_x.model.continue_dev import (
 )
 from ollama_x.model.user import UserNotFound
 
-PREFIX = "continue.dev"
+PREFIX = "continue"
 EDIT_COMMAND = f"{PREFIX}.edit.{CLI_SEPARATOR}"
 
 router = APIRouter(tags=[endpoints.CONTINUE])

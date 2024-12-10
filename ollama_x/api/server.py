@@ -65,10 +65,10 @@ async def get_servers(admin: AdminUser) -> list[APIServer]:
         403: {"model": APIError[AccessDenied], "description": "Access errors."},
     },
 )
-async def create_server(admin: AdminUser, server: ServerBase) -> APIServer:
+async def create_server(admin: AdminUser, url: str) -> APIServer:
     """Create server."""
 
-    server = await APIServer.new(server)
+    server = await APIServer.new(ServerBase(url=url))
     add_server_job(server.id)
 
     return server

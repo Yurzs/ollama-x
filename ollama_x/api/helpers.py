@@ -1,4 +1,4 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Callable
 
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
@@ -42,7 +42,7 @@ async def admin_user(token: BearerToken, request: Request) -> User:
     is_local = request.client.host in ["localhost", "127.0.0.1"]
 
     if is_local and token == "admin":
-        if not await User.one(add_query={"is_admin": True}):
+        if not await User.one(add_query={"is_admin": True}, required=False):
             await User.new(username="admin", key="admin", is_admin=True)
 
     if getattr(request.state, "user", None) is not None and not request.state.user.is_admin:
@@ -135,3 +135,15 @@ def merge_responses(*responses: dict[int, dict[str, Any]]) -> dict[int, dict[str
             result[status_code]["model"] = result_model | response_model
 
     return result
+
+
+def multi_endpoint(router_method: Callable, *routes: list[str], **kwargs):
+    """Create multiple endpoints."""
+
+    def decorator(func):
+        for route in routes:
+            router_method(route, **kwargs)(func)
+
+        return func
+
+    return decorator
