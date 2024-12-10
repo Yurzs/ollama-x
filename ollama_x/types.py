@@ -1,9 +1,8 @@
 import re
 from enum import Enum
-from typing import Any, Self, Type
+from typing import Annotated, Any
 
-from pydantic import GetCoreSchemaHandler
-from pydantic_core import CoreSchema, core_schema
+from pydantic import BeforeValidator, StrictStr
 
 
 class ModelNameType(str, Enum):
@@ -11,43 +10,47 @@ class ModelNameType(str, Enum):
     OPENAI = "openai"
 
 
-class Model(str):
-    type: ModelNameType
-    pattern: str
+class ModelConvertor:
     separator: str
 
-    def __rshift__(self, other: Type[Self]) -> Self:
-        return other(self.convert_model_name(other))
+    PATTERN = r"(?P<model>[\w\d\.\-]*)([\:\/](?P<version>[\w\d\.\-]*))?"
 
-    def convert_model_name(self, to_type: Type[Self]) -> str:
+    SEPARATORS = {
+        ModelNameType.OLLAMA: ":",
+        ModelNameType.OPENAI: "/",
+    }
+
+    def __init__(self, model_type: ModelNameType) -> None:
+        self.type = model_type
+
+    @property
+    def separator(self):
+        return self.SEPARATORS[self.type]
+
+    def __call__(self, value: Any) -> str:
         """Convert model name from one type to another."""
 
-        match re.match(self.pattern, self):
+        match re.match(self.PATTERN, value):
             case None:
-                raise ValueError(f"Invalid model name: {self}")
+                raise ValueError(f"Invalid model name: {value}")
             case match:
                 model = match.group("model")
                 version = match.group("version")
 
-                return f"{model}{f"{to_type.separator}{version}" if version else ""}"
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> CoreSchema:
-        return core_schema.str_schema(pattern=cls.pattern)
+                return f"{model}{f"{self.separator}{version}" if version else ""}"
 
 
-class OllamaModel(Model):
-    type = ModelNameType.OLLAMA
-    pattern = r"(?P<model>[\w\d\.\-]*)(\:(?P<version>[\w\d\.\-]*))?"
-    separator = ":"
+ollama_model_converter = ModelConvertor(ModelNameType.OLLAMA)
+openai_model_converter = ModelConvertor(ModelNameType.OPENAI)
 
+type OllamaModel = Annotated[
+    StrictStr,
+    BeforeValidator(ollama_model_converter),
+]
 
-class OpenAIModel(Model):
-    type = ModelNameType.OPENAI
-    pattern = r"(?P<model>[\w\d\.\-]*)(\/(?P<version>[\w\d\.\-]*))?"
-    separator = "/"
+type OpenAIModel = Annotated[
+    StrictStr,
+    BeforeValidator(openai_model_converter),
+]
 
-
-Models = OllamaModel | OpenAIModel
+type Models = OllamaModel | OpenAIModel

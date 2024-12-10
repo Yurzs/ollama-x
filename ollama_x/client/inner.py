@@ -4,15 +4,11 @@ from functools import partial
 from typing import Any, AsyncIterable, Callable
 
 from fastapi import FastAPI, Request
-import aiohttp
-import certifi
-from aiohttp import TCPConnector
-from pydantic import HttpUrl
 from starlette.datastructures import Headers
 from starlette.responses import JSONResponse, StreamingResponse
 
 from ollama_x.api import endpoints
-from ollama_x.types import OllamaModel, OpenAIModel
+from ollama_x.types import ollama_model_converter
 
 
 class ResponseIterable(AsyncIterable):
@@ -86,9 +82,7 @@ class InnerClient:
                 response_kwargs.update(
                     {
                         "status_code": message["status"],
-                        "headers": {
-                            k.decode(): v.decode() for k, v in message["headers"]
-                        },
+                        "headers": {k.decode(): v.decode() for k, v in message["headers"]},
                     }
                 )
 
@@ -155,7 +149,7 @@ class InnerClient:
             request.receive,
             request.headers,
             {
-                "model": OpenAIModel(model) >> OllamaModel,
+                "model": ollama_model_converter(model),
                 "messages": [
                     {
                         "content": message["content"],
