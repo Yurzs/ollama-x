@@ -12,12 +12,8 @@ from ollama_x.model import APIServer, OllamaModel
 
 LOG = logging.getLogger(__name__)
 
-connection_config = {
-    "host": config.mongo_uri.host,
-    "port": config.mongo_uri.port,
-}
 
-jobstores = {"default": MongoDBJobStore(database="ollama_x", **connection_config)}
+jobstores = {"default": MongoDBJobStore(database="ollama_x", host=config.mongo_uri)}
 
 
 executors = {
@@ -144,23 +140,12 @@ async def ensure_jobs():
         )
 
     scheduler.add_job(
-        ping,
-        "interval",
-        id="ping",
-        seconds=1,
-    )
-
-    scheduler.add_job(
         check_running_models,
         "interval",
         id="check_running_models",
         seconds=config.server_check_interval,
         next_run_time=datetime.datetime.now(utc) + datetime.timedelta(seconds=10),
     )
-
-
-async def ping():
-    pass
 
 
 async def start():

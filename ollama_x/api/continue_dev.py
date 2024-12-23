@@ -48,7 +48,7 @@ async def list_projects(user: AuthorizedUser, request: Request):
     """Get list of continue.dev projects."""
 
     projects = []
-    async for project in ContinueDevProject.all_for_user(user.id):
+    async for project in ContinueDevProject.all_for_user(user.username):
         projects.append(project.personalize(user, str(request.base_url)))
 
     return projects

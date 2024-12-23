@@ -1,9 +1,9 @@
 import datetime
 from collections.abc import AsyncIterable
-from typing import Any, Self
+from typing import Annotated, Any, Self
 
 import pymongo
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import AnyHttpUrl, BaseModel, Field
 from pydantic_mongo_document import DocumentNotFound
 from pydantic_mongo_document.document.asyncio import Document
 from pytz import utc
@@ -19,7 +19,7 @@ class ServerNotFound(DocumentNotFound):
 
 
 class ServerBase(BaseModel):
-    url: HttpUrl = Field(description="Server API base URL")
+    url: Annotated[str, AnyHttpUrl] = Field(description="Server API base URL")
 
 
 class APIServer(Document, ServerBase):

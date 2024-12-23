@@ -3,6 +3,7 @@ from typing import Any, Self
 
 import pymongo
 from pydantic import Field
+from pydantic_mongo_document import ObjectId
 from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
@@ -15,7 +16,7 @@ class Session(Document):
     __database__ = "ollama_x"
     __collection__ = "sessions"
 
-    user: str = Field(description="User ID")
+    user: ObjectId = Field(description="User ID")
     messages: list[dict[str, Any]] | None = Field(None, description="Chat messages")
     context: dict[str, Any] | None = Field(None, description="Generate context")
     expires_after: datetime.datetime = Field(

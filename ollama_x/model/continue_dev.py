@@ -1,9 +1,11 @@
+import os
 import typing
 from typing import Generic, Literal, Self, TypeVar, Union
 
 import bson
 import pymongo
 from pydantic import BaseModel, Field, HttpUrl
+from pydantic_mongo_document import ObjectId
 from pydantic_mongo_document.cursor import Cursor
 from pydantic_mongo_document.document.asyncio import Document
 
@@ -257,11 +259,11 @@ class ContinueDevProject(Document):
 
     admin: str = Field(..., description="Project admin")
     name: str = Field(..., description="Project name")
-    users: list[str] = Field(default_factory=list, description="Project users")
+    users: list[ObjectId] = Field(default_factory=list, description="Project users")
 
     config: ProjectConfig = Field(..., description="continue.dev project config")
 
-    invite_id: str = Field(default_factory=lambda: str(bson.ObjectId()), description="Invite ID")
+    invite_id: str = Field(default_factory=lambda: os.urandom(10).hex(), description="Invite ID")
 
     NotFoundError = ProjectNotFound
     DuplicateKeyError = exceptions.DuplicateKeyError
@@ -327,18 +329,20 @@ class ContinueDevProject(Document):
             "ContinueDevProject": self.id,
         }
 
-        api_base = base_url.replace("http://", "https://")
+        api_base = base_url
 
         # add auth to models
         for model in project.config.models:
             model.title = project.name
             model.api_base = api_base
+            model.api_key = user.key.get_secret_value()
             model.request_options.headers.update(auth_headers)
 
         # add embeddings
         if project.config.embeddings_provider is not None:
             project.config.embeddings_provider.provider = "ollama"
             project.config.embeddings_provider.api_base = api_base
+            project.config.embeddings_provider.api_key = user.key.get_secret_value()
             project.config.embeddings_provider.request_options.headers.update(auth_headers)
 
         # add auth to tab completions
@@ -346,6 +350,7 @@ class ContinueDevProject(Document):
             project.config.tab_autocomplete_model.title = project.name
             project.config.tab_autocomplete_model.provider = "ollama"
             project.config.tab_autocomplete_model.api_base = api_base
+            project.config.tab_autocomplete_model.api_key = user.key.get_secret_value()
             project.config.tab_autocomplete_model.request_options.headers.update(auth_headers)
 
         return project

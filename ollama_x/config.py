@@ -1,16 +1,13 @@
 import logging
-from typing import Annotated, ClassVar, Literal
+from typing import ClassVar, Literal
 
 import sentry_sdk
-from pydantic import AnyUrl, Field, UrlConstraints
+from pydantic import Field
 from pydantic_app_config import EnvAppConfig
 from pydantic_mongo_document import ReplicaConfig
 from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.types import OllamaModel
-
-MongoURI = Annotated[AnyUrl, UrlConstraints(allowed_schemes=["mongodb", "mongodb+srv"])]
-
 
 LOG = logging.getLogger(__name__)
 
@@ -91,7 +88,7 @@ class OllamaXConfig(EnvAppConfig):
         alias="LOG_LEVEL",
     )
 
-    mongo_uri: MongoURI = Field(
+    mongo_uri: str = Field(
         default="mongodb://mongo",
         description="Mongodb connection URI",
         alias="MONGO_URI",

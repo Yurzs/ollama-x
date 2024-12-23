@@ -30,7 +30,7 @@ async def authenticate(request: Request, anonymous_allowed: bool = True) -> User
 
     if authorization.credentials == "undefined" and anonymous_allowed:
         return User(
-            _id="guest",
+            id="guest",
             username="guest",
             key=User.generate_key(),
         )
