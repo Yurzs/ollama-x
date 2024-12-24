@@ -5,6 +5,7 @@ from ollama_x.api.exceptions import AccessDenied, APIError, UserAlreadyExist, Us
 from ollama_x.api.helpers import AdminUser
 from ollama_x.model import User
 from ollama_x.model.user import UserBase
+from ollama_x.config import config
 
 PREFIX = "user"
 
@@ -163,6 +164,9 @@ async def change_key(admin: AdminUser, username: str) -> UserBase:
 )
 async def user_register(email: EmailStr) -> UserBase:
     """Register new user get user key in response."""
+
+    if not config.user_registration_enabled:
+        raise AccessDenied()
 
     if await User.one_by_username(email, required=False) is not None:
         raise UserAlreadyExist()
