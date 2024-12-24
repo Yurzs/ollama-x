@@ -34,3 +34,18 @@ Follow the instructions below to set up the project.
    ```
 
 3. The application will be available at `http://localhost:8000`.
+
+## Environment Variables
+
+The following environment variables are used to configure the services in this project:
+
+- `MONGO_URI`: The URI for connecting to the MongoDB instance. Example: `mongodb://mongo:27017`
+- `LANGFUSE_HOST`: The host for the Langfuse service.
+- `LANGFUSE_PUBLIC_KEY`: The public key for the Langfuse service.
+- `LANGFUSE_SECRET_KEY`: The secret key for the Langfuse service.
+- `ENFORCE_MODEL`: The model to enforce for all requests.
+- `USER_REGISTRATION_ENABLED`: Flag to enable or disable user registration.
+- `SENTRY_DSN`: The DSN for Sentry error tracking.
+- `ANONYMOUS_ALLOWED`: Flag to allow or disallow anonymous access.
+- `ANONYMOUS_MODEL`: The model to enforce for anonymous users.
+- `DOMAIN_NAME`: The domain name for the application.
