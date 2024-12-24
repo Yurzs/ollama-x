@@ -164,5 +164,11 @@ class OllamaXConfig(EnvAppConfig):
         alias="DEFAULT_CHAT_MODEL",
     )
 
+    user_registration_enabled: bool = Field(
+        default=False,
+        description="Flag to enable user registration",
+        alias="USER_REGISTRATION_ENABLED",
+    )
+
 
 config = OllamaXConfig.load()
