@@ -16,10 +16,13 @@ services:
       LANGFUSE_SECRET_KEY: ${LF_SECRET_KEY}
       ENFORCE_MODEL: ${ENFORCE_MODEL}
       USER_REGISTRATION_ENABLED: ${USER_REGISTRATION_ENABLED}
-    ports:
-      - "8000:8000"
     volumes:
       - cli_creds:/app/.openapi_cli/
+    labels:
+      - "traefik.http.routers.ollama-x-app.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.ollama-x-app.entrypoints=websecure"
+      - "traefik.http.routers.ollama-x-app.tls=true"
+      - "traefik.http.services.ollama-x-app.loadbalancer.server.port=8000"
   scheduler:
     container_name: ollama-x-scheduler
     image: ollama-x:latest
@@ -37,24 +40,26 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
     volumes:
       - database:/data/db
-  nginx:
-    container_name: ollama-x-nginx
-    image: nginx:latest
+  traefik:
+    container_name: ollama-x-traefik
+    image: traefik:v2.5
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - letsencrypt:/etc/letsencrypt/
-      - ../nginx/template-variables.conf:/etc/nginx/templates/10-variables.conf.template:ro
-      - ../nginx/proxy.conf:/etc/nginx/nginx.conf
-    environment:
-      DOMAIN_NAME: ${DOMAIN_NAME}
-  certbot:
-    container_name: ollama-x-certbot
-    image: certbot/certbot
-    volumes:
-      - letsencrypt:/etc/letsencrypt/
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do letsencrypt renew; sleep 12h & wait $${!}; done;'"
+      - /var/run/docker.sock:/var/run/docker.sock
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+    labels:
+      - "traefik.http.routers.ollama-x-app.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.ollama-x-app.entrypoints=websecure"
+      - "traefik.http.routers.ollama-x-app.tls=true"
+      - "traefik.http.services.ollama-x-app.loadbalancer.server.port=8000"
 
 volumes:
   letsencrypt:
