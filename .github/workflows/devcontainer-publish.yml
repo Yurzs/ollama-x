@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - '.devcontainer/**'
   workflow_dispatch:
 
 jobs:
