@@ -1,8 +1,6 @@
 services:
   frontend:
-    build:
-      context: ..
-      dockerfile: .devcontainer/frontend.Dockerfile
+    image: ghcr.io/yurzs/ollama-x-dev-frontend:latest
     volumes:
       - ..:/workspace:cached
     command: sleep infinity
@@ -14,9 +12,7 @@ services:
       - backend
 
   backend:
-    build:
-      context: ..
-      dockerfile: .devcontainer/backend.Dockerfile
+    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
     volumes:
       - ..:/app:cached
     command: sleep infinity
