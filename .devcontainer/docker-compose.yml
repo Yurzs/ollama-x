@@ -3,20 +3,46 @@ services:
     image: ghcr.io/yurzs/ollama-x-dev-frontend:latest
     volumes:
       - ..:/workspace:cached
+      - frontend-node-modules:/workspace/frontend/node_modules
     command: sleep infinity
     environment:
       - NODE_ENV=development
+      - NODE_OPTIONS=--openssl-legacy-provider
     ports:
-      - 3000:3000
+      - "3000:3000"
     depends_on:
       - backend
 
   backend:
-    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
+    image: ghcr.io/yurzs/ollama-x:latest
     volumes:
       - ..:/app:cached
-    command: sleep infinity
     environment:
-      - PYTHONPATH=/app
+      MONGO_URI: mongodb://root:example@mongo:27017
+      LANGFUSE_HOST: ${LF_HOST}
+      LANGFUSE_PUBLIC_KEY: ${LF_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LF_SECRET_KEY}
+      ENFORCE_MODEL: ${ENFORCE_MODEL}
+      SENTRY_DSN: ${SENTRY_DSN}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS}
+      ANONYMOUS_ALLOWED: False
+      ANONYMOUS_MODEL: ${ANONYMOUS_MODEL}
+      USER_REGISTRATION_ENABLED: False
     ports:
-      - 8000:8000
+      - "8000:8000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+
+volumes:
+  mongo-data: {}
+  frontend-node-modules: {}

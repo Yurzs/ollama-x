@@ -6,7 +6,7 @@ RUN apt update && apt install gcc musl-dev
 # Install dependencies
 RUN pip install "poetry>=1,<2"
 
-WORKDIR /app
+WORKDIR /workspace
 
 # Copy the poetry.lock and pyproject.toml files
 COPY pyproject.toml poetry.toml ./
