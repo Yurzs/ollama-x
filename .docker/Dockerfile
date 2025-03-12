@@ -1,7 +1,9 @@
-FROM python:3.12-alpine
+ARG debug=0
+
+FROM python:3.12-slim AS builder
 
 # Install the required packages
-RUN apk add --no-cache gcc musl-dev linux-headers
+RUN apt update && apt install -y gcc musl-dev
 
 # Install dependencies
 RUN pip install poetry
@@ -18,6 +20,17 @@ COPY README.md .
 # Install the dependencies
 RUN poetry install
 
-ENTRYPOINT ["poetry", "run"]
+FROM gcr.io/distroless/python3-debian12:${debug:+debug-}nonroot
 
-CMD ["python", "-m", "uvicorn", "ollama_x.app:app", "--host", "0.0.0.0"]
+COPY --from=builder /app /app
+COPY --from=builder /usr/local/lib /usr/local/lib
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /etc/ld.so.cache /etc/ld.so.cache
+
+WORKDIR /app
+
+ENV PATH="/app/.venv/bin:${PATH}"
+
+ENTRYPOINT []
+
+CMD ["uvicorn", "ollama_x.app:app", "--host", "0.0.0.0"]
