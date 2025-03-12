@@ -35,3 +35,16 @@ jobs:
             ghcr.io/yurzs/ollama-x:latest
             ghcr.io/yurzs/ollama-x:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
+
+      - name: Build and push Debug Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: .docker/Dockerfile
+          push: true
+          build-args: |
+            debug=1
+          tags: |
+            ghcr.io/yurzs/ollama-x:latest-debug
+            ghcr.io/yurzs/ollama-x:${{ github.ref_name }}-debug
+          platforms: linux/amd64,linux/arm64
