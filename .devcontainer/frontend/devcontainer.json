@@ -1,5 +1,5 @@
 {
-  "name": "OllamaX Development Environment",
+  "name": "OllamaX Frontend Development Environment",
   "dockerComposeFile": "docker-compose.yml",
   "service": "frontend",
   "workspaceFolder": "/workspace",

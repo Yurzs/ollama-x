@@ -1,6 +1,10 @@
+name: ollama-x-frontend-devcontainer
+
 services:
   frontend:
-    image: ghcr.io/yurzs/ollama-x-dev-frontend:latest
+    build:
+      context: ../..
+      dockerfile: Dockerfile
     volumes:
       - ..:/workspace:cached
       - frontend-node-modules:/workspace/frontend/node_modules
@@ -8,13 +12,15 @@ services:
     environment:
       - NODE_ENV=development
       - NODE_OPTIONS=--openssl-legacy-provider
-    ports:
-      - "3000:3000"
+    expose:
+      - 3000
     depends_on:
       - backend
 
   backend:
-    image: ghcr.io/yurzs/ollama-x:latest
+    build:
+      context: ../..
+      dockerfile: ../backend/Dockerfile
     volumes:
       - ..:/app:cached
     environment:
@@ -28,8 +34,8 @@ services:
       ANONYMOUS_ALLOWED: False
       ANONYMOUS_MODEL: ${ANONYMOUS_MODEL}
       USER_REGISTRATION_ENABLED: False
-    ports:
-      - "8000:8000"
+    expose:
+      - 8000
     depends_on:
       - mongo
 
@@ -37,8 +43,8 @@ services:
     image: mongo:latest
     volumes:
       - mongo-data:/data/db
-    ports:
-      - "27017:27017"
+    expose:
+      - 27017
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=example
