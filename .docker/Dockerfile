@@ -6,12 +6,15 @@ FROM python:3.12-slim AS builder
 RUN apt update && apt install -y gcc musl-dev
 
 # Install dependencies
-RUN pip install poetry
+RUN pip install "poetry>1,<2"
 
 WORKDIR /app
 
 # Copy the poetry.lock and pyproject.toml files
-COPY pyproject.toml poetry.toml ./
+COPY pyproject.toml ./
+
+# Create a poetry.toml file to configure the virtual environment
+RUN echo '[virtualenvs]\ncreate = true\nin-project = true\npath = ".venv"' > poetry.toml
 
 # Copy the rest of the files
 COPY ollama_x ollama_x
