@@ -3,24 +3,37 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "backend",
   "workspaceFolder": "/app",
-
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    }
+  },
   "customizations": {
     "vscode": {
       "settings": {
         "python.defaultInterpreterPath": "/app/.venv/bin/python",
         "editor.formatOnSave": true,
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
         "terminal.integrated.defaultProfile.linux": "zsh"
       },
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "ms-python.black-formatter",
+        "ms-python.flake8"
       ]
     }
   },
-
-  "forwardPorts": [8000, 27017],
-
-  "postCreateCommand": "poetry install"
-
+  "forwardPorts": [
+    8000,
+    27017
+  ],
+  "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+  "remoteUser": "nonroot"
 }

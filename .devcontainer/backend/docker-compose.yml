@@ -3,15 +3,11 @@ name: ollama-x-backend-devcontainer
 services:
   backend:
     image: ghcr.io/yurzs/ollama-x-dev-backend:latest
+    pull_policy: always
     volumes:
       - ../..:/app:cached
-    command: [
-      "uvicorn",
-      "ollama_x.app:app",
-      "--host", "0.0.0.0",
-      "--port", "8000",
-      "--reload",
-    ]
+      - backend-venv:/app/.venv
+    command: sleep infinity
     environment:
       MONGO_URI: mongodb://root:example@mongo:27017
       LANGFUSE_HOST: ${LF_HOST}
@@ -20,16 +16,19 @@ services:
       ENFORCE_MODEL: ${ENFORCE_MODEL}
       SENTRY_DSN: ${SENTRY_DSN}
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS}
-      ANONYMOUS_ALLOWED: False
+      ANONYMOUS_ALLOWED: "False"
       ANONYMOUS_MODEL: ${ANONYMOUS_MODEL}
-      USER_REGISTRATION_ENABLED: False
+      USER_REGISTRATION_ENABLED: "False"
+      PYTHONPATH: /app
     expose:
       - 8000
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
 
   mongo:
     image: mongo:latest
+    pull_policy: always
     volumes:
       - mongo-data:/data/db
     expose:
@@ -37,6 +36,13 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=example
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongodb://localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
 volumes:
   mongo-data: {}
+  backend-venv: {}

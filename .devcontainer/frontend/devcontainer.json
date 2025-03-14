@@ -2,13 +2,11 @@
   "name": "OllamaX Frontend Development Environment",
   "dockerComposeFile": "docker-compose.yml",
   "service": "frontend",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/app",
 
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "ms-vscode-remote.remote-containers"
@@ -22,12 +20,5 @@
 
   "forwardPorts": [3000, 8000, 27017],
   "postCreateCommand": "npm --prefix frontend install --production=false",
-  "remoteUser": "node",
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-  },
-  "postStartCommand": "docker network ls"
+  "remoteUser": "nonroot"
 }
