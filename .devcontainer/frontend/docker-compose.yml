@@ -2,9 +2,7 @@ name: ollama-x-frontend-devcontainer
 
 services:
   frontend:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
+    image: ghcr.io/yurzs/ollama-x-dev-frontend:latest
     volumes:
       - ..:/workspace:cached
       - frontend-node-modules:/workspace/frontend/node_modules
@@ -18,9 +16,7 @@ services:
       - backend
 
   backend:
-    build:
-      context: ../..
-      dockerfile: ../backend/Dockerfile
+    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
     volumes:
       - ..:/app:cached
     environment:

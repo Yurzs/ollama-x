@@ -2,9 +2,7 @@ name: ollama-x-backend-devcontainer
 
 services:
   backend:
-    build:
-      context: ../..
-      dockerfile: .devcontainer/backend/Dockerfile
+    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
     volumes:
       - ../..:/app:cached
     command: [
