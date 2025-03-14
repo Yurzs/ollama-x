@@ -14,4 +14,4 @@ WORKDIR /app
 RUN pip install uv
 
 # Set shell for devcontainer
-SHELL ["/bin/bash", "-c"]
+SHELL ["/bin/zsh", "-c"]
