@@ -17,12 +17,11 @@ services:
       - backend
 
   backend:
-    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
+    image: ghcr.io/yurzs/ollama-x:latest
     pull_policy: always
     volumes:
       - ../..:/app:cached
       - backend-venv:/app/.venv
-    command: sleep infinity
     environment:
       MONGO_URI: mongodb://root:example@mongo:27017
       LANGFUSE_HOST: ${LF_HOST}
