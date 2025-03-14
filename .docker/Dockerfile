@@ -10,7 +10,7 @@ RUN pip install "poetry>1,<2"
 
 WORKDIR /app
 
-# Copy the poetry.lock and pyproject.toml files
+# Copy the pyproject.toml file
 COPY pyproject.toml ./
 
 # Create a poetry.toml file to configure the virtual environment
