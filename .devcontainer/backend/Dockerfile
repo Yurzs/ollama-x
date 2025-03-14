@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Install poetry
-RUN pip install poetry
+RUN pip install "poetry>1,<2"
 
 # Set shell for devcontainer
 SHELL ["/bin/bash", "-c"]
