@@ -15,6 +15,3 @@ RUN pip install uv
 
 # Set shell for devcontainer
 SHELL ["/bin/bash", "-c"]
-
-# Create a symlink for bash to ensure scripts work correctly
-RUN ln -s /bin/bash /usr/bin/bash
