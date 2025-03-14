@@ -1,42 +1,54 @@
-[tool.poetry]
+[project]
 name = "ollama-x"
 version = "0.1.1"
 description = "Ollama Proxy Server with Extensions"
-authors = ["Yury Sokov (Yurzs) <me@yurzs.dev>"]
+authors = [
+    { name = "Yury Sokov (Yurzs)", email = "me@yurzs.dev" }
+]
+license = { text = "MIT" }
 readme = "README.md"
-license = "MIT"
+requires-python = "^3.12"
+dependencies = [
+    "pydantic>=2.8.2,<3",
+    "uvicorn>=0.30,<1",
+    "fastapi>=0.112,<1",
+    "pydantic-mongo-document>=1.0,<2.0",
+    "aiohttp>=3.10.3",
+    "pydantic-app-config @ git+https://github.com/Yurzs/pydantic-app-config.git",
+    "apscheduler>=3.10.4",
+    "langfuse>=2.43.3",
+    "email-validator>=2.2.0",
+    "sentry-sdk[fastapi]>=2.13.0",
+    "openapi-cli>=0.2",
+    "sse-starlette>=2.1.3",
+    "pytz>=2024.2",
+    "python-jose[cryptography]>=3.4.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.20"
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-pydantic = ">=2.8.2,<3"
-uvicorn = ">=0.30,<1"
-fastapi = ">=0.112,<1"
-pydantic-mongo-document = {version = ">=1.0,<2.0"}
-aiohttp = "^3.10.3"
-pydantic-app-config = {git = "https://github.com/Yurzs/pydantic-app-config.git"}
-apscheduler = "^3.10.4"
-langfuse = "^2.43.3"
-email-validator = "^2.2.0"
-sentry-sdk = {extras = ["fastapi"], version = "^2.13.0"}
-openapi-cli = "^0.2"
-sse-starlette = "^2.1.3"
-pytz = "^2024.2"
+[project.optional-dependencies]
+dev = [
+    "isort>=5.13.2",
+    "black>=24.8.0",
+    "autoflake>=2.3.1",
+    "plumbum>=1.8.3",
+    "ruff>=0.6.2",
+    "openapi-cli[full]>=0.2",
+    "types-python-jose>=3.4.0.20250224",
+    "types-passlib>=1.7.7.20241221"
+]
 
-[tool.poetry.group.dev.dependencies]
-isort = "^5.13.2"
-black = "^24.8.0"
-autoflake = "^2.3.1"
-plumbum = "^1.8.3"
-ruff = "^0.6.2"
-openapi-cli = {extras = ["full"], version = "^0.2"}
-
-[tool.poetry.scripts]
+[project.scripts]
 ollama-x = "openapi_cli.cli:main"
 ollama-x-scheduler = "ollama_x.scheduler:main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ollama_x"]
 
 [tool.ruff]
 line-length = 100
@@ -56,7 +68,7 @@ unfixable = []
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[toll.ruff.format]
+[tool.ruff.format]
 docstring-code-format = true
 quote-style = "double"
 indent-style = "space"

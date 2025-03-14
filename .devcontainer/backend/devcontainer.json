@@ -34,6 +34,6 @@
     8000,
     27017
   ],
-  "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+  "postCreateCommand": "uv venv .venv && . .venv/bin/activate && uv pip install -r requirements.txt",
   "remoteUser": "nonroot"
 }

@@ -21,6 +21,7 @@ services:
       - "8000:8000"
     volumes:
       - ~/.openapi_cli:/app/.openapi_cli/
+
   scheduler:
     container_name: ${PROJECT_NAME}-scheduler
     image: ghcr.io/yurzs/ollama-x:latest
@@ -31,6 +32,7 @@ services:
       MONGO_URI: mongodb://mongo:27017
       SENTRY_DSN: ${SENTRY_DSN}
     command: ["ollama-x-scheduler"]
+
   mongo:
     container_name: ${PROJECT_NAME}-mongo
     image: mongo:latest
@@ -38,6 +40,7 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
     volumes:
       - ./database:/data/db
+
   nginx:
     container_name: ${PROJECT_NAME}-nginx
     image: nginx:latest
@@ -50,6 +53,7 @@ services:
       - ./nginx/proxy.conf:/etc/nginx/conf.d/proxy.conf
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
+
   certbot:
     container_name: ${PROJECT_NAME}-certbot
     image: certbot/certbot
