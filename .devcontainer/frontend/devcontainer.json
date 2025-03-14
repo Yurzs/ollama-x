@@ -9,16 +9,35 @@
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-vscode-remote.remote-containers"
+        "ms-vscode-remote.remote-containers",
+        "dsznajder.es7-react-js-snippets",
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "bradlc.vscode-tailwindcss",
+        "naumovs.color-highlight",
+        "mikestead.dotenv"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        },
+        "eslint.validate": ["javascript", "javascriptreact"],
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "editor.tabSize": 2,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "emmet.includeLanguages": {
+          "javascript": "javascriptreact"
+        },
+        "emmet.syntaxProfiles": {
+          "javascript": "jsx"
+        }
       }
     }
   },
 
   "forwardPorts": [3000, 8000, 27017],
   "postCreateCommand": "npm --prefix frontend install --production=false",
-  "remoteUser": "nonroot"
+  "remoteUser": "node"
 }
