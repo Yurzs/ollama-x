@@ -14,10 +14,10 @@ jobs:
         component: [frontend, backend]
         include:
           - component: frontend
-            dockerfile: .devcontainer/frontend.Dockerfile
+            dockerfile: .devcontainer/frontend/Dockerfile
             image: ghcr.io/yurzs/ollama-x-dev-frontend
           - component: backend
-            dockerfile: .devcontainer/backend.Dockerfile
+            dockerfile: .devcontainer/backend/Dockerfile
             image: ghcr.io/yurzs/ollama-x-dev-backend
 
     steps:
