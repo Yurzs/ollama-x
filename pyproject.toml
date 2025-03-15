@@ -29,9 +29,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "isort>=5.13.2",
-    "black>=24.8.0",
-    "autoflake>=2.3.1",
     "plumbum>=1.8.3",
     "ruff>=0.6.2",
     "openapi-cli[full]>=0.2",
