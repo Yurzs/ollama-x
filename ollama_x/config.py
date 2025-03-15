@@ -2,7 +2,7 @@ import logging
 from typing import ClassVar, Literal
 
 import sentry_sdk
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_app_config import EnvAppConfig
 from pydantic_mongo_document import ReplicaConfig
 from pydantic_mongo_document.document.asyncio import Document
@@ -168,6 +168,18 @@ class OllamaXConfig(EnvAppConfig):
         default=False,
         description="Flag to enable user registration",
         alias="USER_REGISTRATION_ENABLED",
+    )
+
+    jwt_secret_key: SecretStr = Field(
+        default="jwt-token-please-redefine",
+        description="Secret key for JWT token generation",
+        alias="JWT_SECRET_KEY",
+    )
+
+    jwt_token_expire_minutes: int = Field(
+        default=30,
+        description="JWT token expiration time in minutes",
+        alias="JWT_TOKEN_EXPIRE_MINUTES",
     )
 
 

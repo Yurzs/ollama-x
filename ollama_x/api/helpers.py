@@ -4,12 +4,14 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 from ollama_x.api.exceptions import AccessDenied
-from ollama_x.api.security import security
-from ollama_x.model import ContinueDevProject, Session, User
+from ollama_x.api.security import oauth2_scheme
+from ollama_x.model.user import User
+from ollama_x.model.continue_dev import ContinueDevProject
+from ollama_x.model.session import Session
 
 
 def get_token(
-    authorization: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    authorization: Annotated[HTTPAuthorizationCredentials, Depends(oauth2_scheme)],
 ) -> str:
     """Get token key from header."""
 

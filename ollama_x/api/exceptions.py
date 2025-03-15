@@ -11,8 +11,21 @@ from ollama_x.model.exceptions import DuplicateKeyError
 TE = TypeVar("TE", bound=type[Exception])
 E = TypeVar("E", bound=Exception)
 T = TypeVar("T")
-
 C = TypeVar("C", bound="str")
+
+
+class BaseAPIException(Exception):
+    status_code: int = 500
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+
+
+class AccessDenied(BaseAPIException):
+    status_code: int = 403
+
+    def __init__(self) -> None:
+        super().__init__("Access denied")
 
 
 @dataclass(frozen=True)
@@ -36,20 +49,6 @@ class APIError(BaseModel, Generic[TE]):
 
     def __init__(self, exc: E) -> None:
         super().__init__(detail={"code": exc.__class__.__name__, "message": str(exc)})
-
-
-class BaseAPIException(Exception):
-    status_code: int = 500
-
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
-
-
-class AccessDenied(BaseAPIException):
-    status_code: int = 403
-
-    def __init__(self) -> None:
-        super().__init__("Access denied")
 
 
 class UserNotFound(BaseAPIException):

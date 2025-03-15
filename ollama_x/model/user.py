@@ -10,6 +10,7 @@ from pydantic_mongo_document import DocumentNotFound
 from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.model import exceptions
+from ollama_x.utils.passwords import verify_password, get_password_hash
 
 
 class UserNotFound(DocumentNotFound):
@@ -29,6 +30,7 @@ class UserBase(BaseModel):
         Field(description="Username"),
     ]
     is_admin: bool = Field(default=False, description="Is user admin flag")
+    is_active: bool = Field(default=True, description="Is user active")
     key: str | None = Field(description="Users API key")
 
     @classmethod
@@ -36,6 +38,7 @@ class UserBase(BaseModel):
         return cls(
             username=doc.username,
             is_admin=doc.is_admin,
+            is_active=doc.is_active,
             key=doc.key.get_secret_value() if doc.key and not exclude_secrets else None,
         )
 
@@ -48,6 +51,7 @@ class User(UserBase, Document):
     __collection__: ClassVar[str] = "users"
 
     key: SecretStr = Field(description="Users API key")
+    hashed_password: str | None = Field(default=None, description="Hashed password")
 
     NotFoundError = UserNotFound
     DuplicateKeyError = exceptions.DuplicateKeyError
@@ -92,15 +96,31 @@ class User(UserBase, Document):
     async def new(
         cls,
         username: str,
+        password: str,
         key: str | None = None,
         is_admin: bool = False,
     ) -> Self:
         """Create new user."""
 
-        user = cls(username=username, key=key or cls.generate_key(), is_admin=is_admin)
+        user = cls(
+            username=username,
+            key=key or cls.generate_key(),
+            is_admin=is_admin,
+            hashed_password=get_password_hash(password),
+        )
 
         await user.insert()
 
+        return user
+
+    @classmethod
+    async def authenticate(cls, username: str, password: str) -> Self | None:
+        """Authenticate a user with username and password."""
+        user = await cls.one_by_username(username, required=False)
+        if not user or not user.hashed_password:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
         return user
 
     @classmethod
