@@ -39,6 +39,12 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    command: [
+      "uvicorn", "ollama_x.app:app",
+      "--host", "0.0.0.0",
+      "--port", "8000",
+      "--reload",
+    ]
 
   mongo:
     image: mongo:latest
