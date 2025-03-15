@@ -17,7 +17,7 @@ services:
       - backend
 
   backend:
-    image: ghcr.io/yurzs/ollama-x:latest
+    image: ghcr.io/yurzs/ollama-x-dev-backend:latest
     pull_policy: always
     volumes:
       - ../..:/app:cached
@@ -39,12 +39,10 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-    command: [
-      "uvicorn", "ollama_x.app:app",
-      "--host", "0.0.0.0",
-      "--port", "8000",
-      "--reload",
-    ]
+    command: >
+      zsh -c "cd /app && 
+      uv sync &&
+      uv run fastapi dev ollama_x/app.py --host 0.0.0.0"
 
   mongo:
     image: mongo:latest
