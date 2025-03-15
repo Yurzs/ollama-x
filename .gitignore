@@ -15,5 +15,18 @@ poetry.lock
 build/
 dist/
 
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
 # Ignore all files in the .gitignore file
 !.gitignore

@@ -16,24 +16,35 @@ Follow the instructions below to set up the project.
 
 - Docker
 - Docker Compose
-- Make
+- Python 3.12+
+- uv (install with `pip install uv`)
 
-### Building and Running Docker Containers
+### Local Development Setup
 
 1. Clone the repository:
-
    ```sh
    git clone https://github.com/Yurzs/ollama-x.git
    cd ollama-x
    ```
 
-2. Build and run the Docker containers using `docker-compose`:
+2. Create a virtual environment and install dependencies:
+   ```sh
+   make setup
+   ```
 
+3. Format code and run linters:
+   ```sh
+   make format
+   ```
+
+### Building and Running Docker Containers
+
+1. Build and run the Docker containers:
    ```sh
    docker-compose up --build
    ```
 
-3. The application will be available at `http://localhost:8000`.
+2. The application will be available at `http://localhost:8000`.
 
 ## Environment Variables
 

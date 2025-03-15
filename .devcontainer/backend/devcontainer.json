@@ -4,7 +4,9 @@
   "service": "backend",
   "workspaceFolder": "/app",
   "features": {
-    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": 3.12,
+    },
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": true,
       "configureZshAsDefaultShell": true,
@@ -30,10 +32,17 @@
       ]
     }
   },
+  "containerEnv": {
+    "DISPLAY": "dummy",
+    "PYTHONUNBUFFERED": "True",
+    "UV_LINK_MODE": "copy",
+    "UV_PROJECT_ENVIRONMENT": "/app/.venv"
+  },
   "forwardPorts": [
-    8000,
-    27017
+    "backend:8000",
+    "mongo:27017"
   ],
-  "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install",
+  "postCreateCommand": "uv sync --frozen",
+  "postStartCommand": "uv run pre-commit install",
   "remoteUser": "nonroot"
 }

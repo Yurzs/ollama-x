@@ -7,6 +7,7 @@ services:
     volumes:
       - ../..:/app:cached
       - backend-venv:/app/.venv
+      - backend-cache:/root/.cache  # Add cache volume for uv
     command: sleep infinity
     environment:
       MONGO_URI: mongodb://root:example@mongo:27017
@@ -46,3 +47,4 @@ services:
 volumes:
   mongo-data: {}
   backend-venv: {}
+  backend-cache: {}  # Add cache volume definition
