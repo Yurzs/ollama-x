@@ -1,75 +1,16 @@
 import logging
-from typing import ClassVar, Literal
+from typing import Literal
 
-import sentry_sdk
 from pydantic import Field, SecretStr
 from pydantic_app_config import EnvAppConfig
-from pydantic_mongo_document import ReplicaConfig
-from pydantic_mongo_document.document.asyncio import Document
 
 from ollama_x.types import OllamaModel
 
 LOG = logging.getLogger(__name__)
 
-LOG_LEVELS = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL,
-}
-
-
-def setup_document(conf: "OllamaXConfig") -> None:
-    """Sets up document."""
-
-    if conf.client_generation:
-        return
-
-    Document.set_replica_config(
-        {
-            "default": ReplicaConfig(
-                uri=conf.mongo_uri,
-                client_options={
-                    "serverSelectionTimeoutMS": 50,
-                },
-            )
-        }
-    )
-
-
-async def ensure_indexes(conf: "OllamaXConfig") -> None:
-    """Ensure indexes for all models."""
-
-    import ollama_x.model
-
-    if conf.client_generation:
-        return
-
-    for model in ollama_x.model.__all__:
-        model = getattr(ollama_x.model, model)
-        if isinstance(model, type) and issubclass(model, Document):
-            await model.create_indexes()
-
-
-def setup_log(conf: "OllamaXConfig") -> None:
-    import logging
-
-    logging.basicConfig(level=LOG_LEVELS[conf.log_level.upper()])
-
-
-def setup_sentry(conf: "OllamaXConfig") -> None:
-    if conf.client_generation:
-        return
-
-    if conf.sentry_dsn:
-        sentry_sdk.init(conf.sentry_dsn)
-
 
 class OllamaXConfig(EnvAppConfig):
     """OllamaX app configuration."""
-
-    STARTUP: ClassVar = [setup_log, setup_document, ensure_indexes, setup_sentry]
 
     log_level: Literal[
         "DEBUG",
