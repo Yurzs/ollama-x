@@ -78,4 +78,16 @@ export class OllamaService {
             url: '/ollama/v1/chat/completions',
         });
     }
+    /**
+     * List All Models With Details
+     * Get detailed information about all models installed on Ollama servers.
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public static listAllModelsWithDetails(): CancelablePromise<Record<string, number>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/models',
+        });
+    }
 }
