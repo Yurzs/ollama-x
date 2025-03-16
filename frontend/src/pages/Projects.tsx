@@ -62,7 +62,7 @@ export function Projects() {
     setLoading(true);
     setError("");
     try {
-      const response = await ContinueService.getAllProjectsContinueAllGet();
+      const response = await ContinueService.listProjects();
       if (Array.isArray(response)) {
         setProjects(response);
       }
@@ -105,7 +105,7 @@ export function Projects() {
         },
       };
 
-      await ContinueService.createProjectContinueCreatePost(newProjectData);
+      await ContinueService.createProject(newProjectData);
       toast.success(`Project "${newProjectName}" created successfully`);
       setOpenCreateDialog(false);
       setNewProjectName("");
@@ -117,17 +117,13 @@ export function Projects() {
 
   const handleResetInviteId = async (projectId: string) => {
     try {
-      await ContinueService.resetInviteIdContinueResetInviteIdPost({
-        project_id: projectId,
-      });
+      await ContinueService.resetInviteId(projectId);
       toast.success("Invite link reset successfully");
       fetchProjects();
 
       // Update selected project if it's currently being viewed
       if (selectedProject && selectedProject._id === projectId) {
-        const updatedProject = await ContinueService.getProjectContinueOneGet({
-          project_name: selectedProject.name,
-        });
+        const updatedProject = await ContinueService.getProject(selectedProject.name);
         if ("_id" in updatedProject) {
           setSelectedProject(updatedProject);
         }
@@ -139,9 +135,7 @@ export function Projects() {
 
   const openProjectDetails = async (project: ContinueDevProject) => {
     try {
-      const response = await ContinueService.getProjectContinueOneGet({
-        project_name: project.name,
-      });
+      const response = await ContinueService.getProject(project.name);
       if ("_id" in response) {
         setSelectedProject(response);
         setOpenDetailsDialog(true);
