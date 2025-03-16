@@ -123,7 +123,9 @@ export function Projects() {
 
       // Update selected project if it's currently being viewed
       if (selectedProject && selectedProject._id === projectId) {
-        const updatedProject = await ContinueService.getProject(selectedProject.name);
+        const updatedProject = await ContinueService.getProject(
+          selectedProject.name
+        );
         if ("_id" in updatedProject) {
           setSelectedProject(updatedProject);
         }

@@ -42,13 +42,13 @@ import toast from "react-hot-toast";
 import { AdminService, ServerService } from "../client";
 import type { APIServer, OllamaModel } from "../client";
 import { ServerStatusIcon } from "../components/ServerStatusIcon";
-import { 
-  PieChart, 
-  Pie, 
-  ResponsiveContainer, 
-  Cell, 
+import {
+  PieChart,
+  Pie,
+  ResponsiveContainer,
+  Cell,
   Legend,
-  Tooltip as RechartsTooltip
+  Tooltip as RechartsTooltip,
 } from "recharts";
 
 // Layer progress tracking interface
