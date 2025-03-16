@@ -1,78 +1,70 @@
 import { useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-} from "@mui/material";
-import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { Box, TextField, Button, Typography } from "@mui/material";
+import { useAuth } from "../hooks";
 
 export function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     try {
       await login(username, password);
+      navigate("/chat");
     } catch (err) {
-      setError("Invalid username or password");
+      const message =
+        err instanceof Error ? err.message : "Invalid username or password";
+      setError(message);
     }
   };
 
   return (
     <Box
+      component="form"
+      onSubmit={handleSubmit}
       sx={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
+        maxWidth: 400,
+        mx: "auto",
+        mt: 8,
+        p: 3,
       }}
     >
-      <Card sx={{ minWidth: 300, maxWidth: 400 }}>
-        <CardContent>
-          <Typography
-            variant="h5"
-            component="h1"
-            gutterBottom
-            textAlign="center"
-          >
-            Login to Ollama-X
-          </Typography>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Username"
-              margin="normal"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              type="password"
-              label="Password"
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button fullWidth type="submit" variant="contained" sx={{ mt: 2 }}>
-              Login
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+        Login
+      </Typography>
+
+      <TextField
+        fullWidth
+        label="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        margin="normal"
+        required
+      />
+
+      <TextField
+        fullWidth
+        label="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        margin="normal"
+        required
+      />
+
+      {error && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
+        Login
+      </Button>
     </Box>
   );
 }

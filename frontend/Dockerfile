@@ -7,6 +7,9 @@ RUN npm install
 
 COPY . .
 
+COPY /app/.zshrc /root/.zshrc
+RUN echo "source /root/.zshrc" >> /root/.bashrc
+
 RUN npm run build
 
 # Use serve to run the app

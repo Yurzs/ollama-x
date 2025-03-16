@@ -13,12 +13,18 @@ import {
   ListItemText,
   Box,
   Button,
+  Divider,
+  ListItemButton,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChatIcon from "@mui/icons-material/Chat";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { useAuth } from "../hooks/useAuth";
+import PeopleIcon from "@mui/icons-material/People";
+import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import FolderIcon from "@mui/icons-material/Folder";
+import StorageIcon from "@mui/icons-material/Storage";
+import { useAuth } from "../hooks";
 
 const DrawerWidth = 240;
 
@@ -33,11 +39,11 @@ const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })<{
   }),
   marginLeft: 0,
   ...(open && {
+    marginLeft: DrawerWidth,
     transition: theme.transitions.create("margin", {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    marginLeft: DrawerWidth,
   }),
 }));
 
@@ -50,6 +56,15 @@ export function Layout() {
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Chat", icon: <ChatIcon />, path: "/chat" },
   ];
+
+  const adminMenuItems = user?.is_admin
+    ? [
+        { text: "Users", icon: <PeopleIcon />, path: "/users" },
+        { text: "Models", icon: <ModelTrainingIcon />, path: "/models" },
+        { text: "Projects", icon: <FolderIcon />, path: "/projects" },
+        { text: "Servers", icon: <StorageIcon />, path: "/servers" },
+      ]
+    : [];
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -100,18 +115,59 @@ export function Layout() {
         <Toolbar />
         <List>
           {menuItems.map((item) => (
-            <ListItem
-              button
-              key={item.text}
-              onClick={() => {
-                navigate(item.path);
-                setDrawerOpen(false);
-              }}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                onClick={() => {
+                  navigate(item.path);
+                  setDrawerOpen(false);
+                }}
+                sx={{
+                  "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.08)" },
+                  borderRadius: 1,
+                  m: 0.5,
+                }}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
             </ListItem>
           ))}
+
+          {adminMenuItems.length > 0 && (
+            <>
+              <Divider sx={{ my: 1 }} />
+              <ListItem sx={{ px: 2 }}>
+                <ListItemText
+                  primary="Admin"
+                  primaryTypographyProps={{
+                    variant: "caption",
+                    color: "text.secondary",
+                  }}
+                />
+              </ListItem>
+
+              {adminMenuItems.map((item) => (
+                <ListItem key={item.text} disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(item.path);
+                      setDrawerOpen(false);
+                    }}
+                    sx={{
+                      "&:hover": {
+                        backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      },
+                      borderRadius: 1,
+                      m: 0.5,
+                    }}
+                  >
+                    <ListItemIcon>{item.icon}</ListItemIcon>
+                    <ListItemText primary={item.text} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </>
+          )}
         </List>
       </Drawer>
       <Main open={drawerOpen}>

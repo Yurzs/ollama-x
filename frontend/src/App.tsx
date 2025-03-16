@@ -1,18 +1,18 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import Box from "@mui/material/Box";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { Layout } from "./components/Layout";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Servers } from "./pages/Servers";
+import { Projects } from "./pages/Projects";
+import { Users } from "./pages/Users";
+import { Chat } from "./pages/Chat";
 
 const darkTheme = createTheme({
   palette: {
@@ -33,9 +33,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <AuthProvider>
-          <ThemeProvider theme={darkTheme}>
-            <CssBaseline />
+        <ThemeProvider theme={darkTheme}>
+          <CssBaseline />
+          <AuthProvider>
             <Toaster
               position="top-right"
               toastOptions={{
@@ -56,10 +56,14 @@ function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="chat" element={<Chat />} />
+                <Route path="servers" element={<Servers />} />
+                <Route path="projects" element={<Projects />} />
+                <Route path="users" element={<Users />} />
               </Route>
             </Routes>
-          </ThemeProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </Router>
     </QueryClientProvider>
   );

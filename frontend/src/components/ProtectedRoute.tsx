@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks";
 import { LoadingState } from "./LoadingState";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
