@@ -41,6 +41,15 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import toast from "react-hot-toast";
 import { AdminService, ServerService } from "../client";
 import type { APIServer, OllamaModel } from "../client";
+import { ServerStatusIcon } from "../components/ServerStatusIcon";
+import { 
+  PieChart, 
+  Pie, 
+  ResponsiveContainer, 
+  Cell, 
+  Legend,
+  Tooltip as RechartsTooltip
+} from "recharts";
 
 // Layer progress tracking interface
 interface LayerProgress {
@@ -57,6 +66,14 @@ interface MemoryDataEntry {
   ram: number;
   fullName: string;
 }
+
+const isServerActive = (lastAliveTime: string): boolean => {
+  if (!lastAliveTime || lastAliveTime === "1970-01-01T00:00:00") return false;
+  const lastAlive = new Date(lastAliveTime);
+  const now = new Date();
+  const diffInSeconds = (now.getTime() - lastAlive.getTime()) / 1000;
+  return diffInSeconds < 20; // Server is considered active if last alive within 20 seconds
+};
 
 export function Servers() {
   const [servers, setServers] = useState<APIServer[]>([]);
@@ -105,7 +122,7 @@ export function Servers() {
     }
     setError("");
     try {
-      const response = await AdminService.getServersServerAllGet();
+      const response = await ServerService.getServers();
       if (Array.isArray(response)) {
         setServers(response);
         setLastRefreshTime(new Date());
@@ -382,6 +399,14 @@ export function Servers() {
   const label = (props: PieLabelRenderProps) => {
     const { name, value } = props;
     return `${name} (${formatBytes(value as number)})`;
+  };
+
+  const isServerActive = (lastAliveTime: string): boolean => {
+    if (!lastAliveTime || lastAliveTime === "1970-01-01T00:00:00") return false;
+    const lastAlive = new Date(lastAliveTime);
+    const now = new Date();
+    const diffInSeconds = (now.getTime() - lastAlive.getTime()) / 1000;
+    return diffInSeconds < 20; // Server is considered active if last alive within 20 seconds
   };
 
   return (

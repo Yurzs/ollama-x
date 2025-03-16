@@ -60,7 +60,7 @@ export function Users() {
     setLoading(true);
     setError("");
     try {
-      const response = await AdminService.getAllUsersUserAllGet();
+      const response = await AdminService.getAllUsers();
       if (Array.isArray(response)) {
         setUsers(response);
       } else {
@@ -81,7 +81,7 @@ export function Users() {
 
   const handleCreateUser = async () => {
     try {
-      const response = await AdminService.createUserUserCreatePost({
+      const response = await AdminService.createUser({
         username,
         password,
         is_admin: isAdmin,
@@ -108,9 +108,7 @@ export function Users() {
     if (!selectedUser) return;
 
     try {
-      const response = await AdminService.deleteUserUserDeleteDelete(
-        selectedUser.username
-      );
+      const response = await AdminService.deleteUser(selectedUser.username);
       if ("username" in response) {
         toast.success("User deleted successfully");
         setOpenDeleteDialog(false);
@@ -133,9 +131,7 @@ export function Users() {
     if (!selectedUser) return;
 
     try {
-      const response = await AdminService.changeKeyUserResetKeyPost(
-        selectedUser.username
-      );
+      const response = await AdminService.changeKey(selectedUser.username);
       if ("key" in response) {
         setResetApiKey(response.key || null);
         toast.success("API key reset successfully");
