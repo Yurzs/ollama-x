@@ -165,8 +165,7 @@ export function Servers() {
 
     setLoadingModels((prev) => ({ ...prev, [serverId]: true }));
     try {
-      const response =
-        await ServerService.serverModelsServerServerIdModelListGet(serverId);
+      const response = await ServerService.serverModels(serverId);
       setServers((prevServers) =>
         prevServers.map((server) =>
           server._id === serverId
@@ -186,7 +185,7 @@ export function Servers() {
 
   const handleCreateServer = async () => {
     try {
-      const response = await AdminService.createServerServerCreatePost(
+      const response = await AdminService.createServer(
         serverUrl
       );
       if ("_id" in response) {
@@ -204,7 +203,7 @@ export function Servers() {
     if (!selectedServer) return;
 
     try {
-      await ServerService.updateServerServerUpdatePost(
+      await AdminService.updateServer(
         selectedServer._id,
         serverUrl
       );
@@ -222,7 +221,7 @@ export function Servers() {
     if (!selectedServer) return;
 
     try {
-      await AdminService.deleteServerServerDeleteDelete(selectedServer._id);
+      await AdminService.deleteServer(selectedServer._id);
       toast.success("Server deleted successfully");
       setOpenDeleteDialog(false);
       setSelectedServer(null);
@@ -242,7 +241,7 @@ export function Servers() {
 
     try {
       const response =
-        await ServerService.serverPullModelServerServerIdModelPullPost(
+        await ServerService.serverPullModel(
           selectedServer._id,
           modelName,
           true
@@ -269,7 +268,7 @@ export function Servers() {
 
     setIsDeleting(true);
     try {
-      await ServerService.serverDeleteModelServerServerIdModelDeleteDelete(
+      await ServerService.serverDeleteModel(
         selectedServer._id,
         selectedModel.name
       );

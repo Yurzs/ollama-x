@@ -14,7 +14,7 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { AdminService, OllamaService, ServerService } from "../client";
+import { OllamaService } from "../client";
 import type { OllamaModel } from "../client";
 import type {
   ChatRequest,
@@ -32,23 +32,27 @@ export function Chat() {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch available models
-  const { data: models, isLoading: modelsLoading } = useQuery<OllamaModel[]>({
+  // Fetch available models using OllamaService
+  const { data: modelsData, isLoading: modelsLoading } = useQuery({
     queryKey: ["models"],
     queryFn: async () => {
-      const response = await ServerService.serverModels("default");
-      return response.models || [];
+      const response = await fetch("/ollama/models");
+      if (!response.ok) {
+        throw new Error("Failed to fetch models");
+      }
+      return await response.json();
     },
   });
 
+  // Extract models from the response
+  const models = modelsData?.models || [];
+
   const handleSend = async () => {
     if (!input.trim() || !selectedModel) return;
-
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-
     try {
       const chatRequest: ChatRequest = {
         model: selectedModel,
@@ -58,7 +62,6 @@ export function Chat() {
           temperature: 0.7,
         },
       };
-
       const response = await OllamaService.ollamaChat(chatRequest);
       const assistantMessage: Message = {
         role: "assistant",
@@ -102,7 +105,6 @@ export function Chat() {
           </Select>
         </FormControl>
       </Box>
-
       <Paper
         sx={{
           flex: 1,
@@ -134,7 +136,6 @@ export function Chat() {
           </Box>
         ))}
       </Paper>
-
       <Box sx={{ display: "flex", gap: 1 }}>
         <TextField
           fullWidth

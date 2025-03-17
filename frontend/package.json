@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "update-client": "openapi --input ../openapi.json --output src/client"
+    "update-client": "openapi --input http://backend:8000/api/openapi.json --output src/client"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

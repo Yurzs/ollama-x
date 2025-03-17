@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { ListAllModelsResponse } from '../models/ListAllModelsResponse';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -81,13 +82,13 @@ export class OllamaService {
     /**
      * List All Models With Details
      * Get detailed information about all models installed on Ollama servers.
-     * @returns any Successful Response
+     * @returns ListAllModelsResponse Successful Response
      * @throws ApiError
      */
-    public static listAllModelsWithDetails(): CancelablePromise<Record<string, number>> {
+    public static listAllModelsWithDetails(): CancelablePromise<ListAllModelsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/models',
+            url: '/ollama/models',
         });
     }
 }
