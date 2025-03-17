@@ -44,7 +44,16 @@ services:
       retries: 3
       start_period: 5s
 
+  ollama:
+    image: ollama/ollama
+    pull_policy: always
+    volumes:
+      - ollama-data:/root/.ollama
+    expose:
+      - 11434
+
 volumes:
   mongo-data: {}
   backend-venv: {}
-  backend-cache: {}  # Add cache volume definition
+  backend-cache: {}
+  ollama-data: {}

@@ -23,12 +23,12 @@ services:
       - ../..:/app:cached
       - backend-venv:/app/.venv
     environment:
-      MONGO_URI: mongodb://root:example@mongo:27017
+      MONGO_URI: &mongo-uri mongodb://root:example@mongo:27017
       LANGFUSE_HOST: ${LF_HOST}
       LANGFUSE_PUBLIC_KEY: ${LF_PUBLIC_KEY}
       LANGFUSE_SECRET_KEY: ${LF_SECRET_KEY}
       ENFORCE_MODEL: ${ENFORCE_MODEL}
-      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_DSN: &sentry-dsn ${SENTRY_DSN}
       FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS}
       ANONYMOUS_ALLOWED: "False"
       ANONYMOUS_MODEL: ${ANONYMOUS_MODEL}
@@ -43,6 +43,21 @@ services:
       zsh -c "cd /app && 
       uv sync &&
       uv run fastapi dev ollama_x/app.py --host 0.0.0.0"
+
+  scheduler:
+    image:  ghcr.io/yurzs/ollama-x-dev-backend:latest
+    volumes:
+      - ../..:/app:cached
+      - backend-venv:/app/.venv
+    depends_on:
+      - backend
+    environment:
+      MONGO_URI: *mongo-uri
+      SENTRY_DSN: *sentry-dsn
+    command: >
+      zsh -c "cd /app && 
+      uv sync &&
+      uv run ollama-x-scheduler"
 
   mongo:
     image: mongo:latest
@@ -61,7 +76,16 @@ services:
       retries: 3
       start_period: 5s
 
+  ollama:
+    image: ollama/ollama
+    pull_policy: always
+    volumes:
+      - ollama-data:/root/.ollama
+    expose:
+      - 11434
+
 volumes:
   mongo-data: {}
   frontend-node-modules: {}
   backend-venv: {}
+  ollama-data: {}
