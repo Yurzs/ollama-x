@@ -10,7 +10,7 @@ from pytz import utc
 
 from ollama_x.model import exceptions
 
-from ollama_x.client.ollama import OllamaClient
+from ollama_x.client.ollama import OllamaClient, OllamaModel, OllamaRunningModel
 
 
 class ServerNotFound(DocumentNotFound):
@@ -42,12 +42,12 @@ class APIServer(Document, ServerBase):
         description="Last alive",
     )
 
-    models: list[dict[str, Any]] = Field(
+    models: list[OllamaModel] = Field(
         default_factory=list,
         description="Models",
     )
 
-    running_models: list[dict[str, Any]] = Field(
+    running_models: list[OllamaRunningModel] = Field(
         default_factory=list,
         description="Running models",
     )

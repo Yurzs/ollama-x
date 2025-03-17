@@ -40,7 +40,8 @@
   },
   "forwardPorts": [
     "backend:8000",
-    "mongo:27017"
+    "mongo:27017",
+    "ollama:11434",
   ],
   "postCreateCommand": "uv sync --frozen",
   "postStartCommand": "uv run pre-commit install",

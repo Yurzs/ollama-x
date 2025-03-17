@@ -9,6 +9,7 @@ from pytz import utc
 
 from ollama_x.config import config
 from ollama_x.model import APIServer, OllamaModel
+from ollama_x.startup import setup_log, setup_sentry, setup_document, ensure_indexes
 
 LOG = logging.getLogger(__name__)
 
@@ -96,11 +97,9 @@ async def save_models_info(server: APIServer) -> None:
                 model_base["model"],
                 verbose=True,
             ) as response:
-                data = await response.json()
-
                 model = await OllamaModel.create_or_update(
                     model_base["model"],
-                    data,
+                    response,
                     model_base["digest"],
                 )
 
@@ -149,6 +148,16 @@ async def ensure_jobs():
 
 
 async def start():
+    for task in [
+        setup_log,
+        setup_sentry,
+        setup_document,
+        ensure_indexes,
+    ]:
+        result = task()
+        if isinstance(result, asyncio.Future):
+            await result
+
     scheduler.start()
 
     await ensure_jobs()

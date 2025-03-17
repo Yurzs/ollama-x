@@ -1,0 +1,73 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export { ApiError } from './core/ApiError';
+export { CancelablePromise, CancelError } from './core/CancelablePromise';
+export { OpenAPI } from './core/OpenAPI';
+export type { OpenAPIConfig } from './core/OpenAPI';
+
+export type { APIError } from './models/APIError';
+export type { APIError_AccessDenied_ } from './models/APIError_AccessDenied_';
+export type { APIError_DuplicateKeyError_ } from './models/APIError_DuplicateKeyError_';
+export type { APIError_ProjectNotFound_ } from './models/APIError_ProjectNotFound_';
+export type { APIError_ServerNotFound_ } from './models/APIError_ServerNotFound_';
+export type { APIError_UserAlreadyExist_ } from './models/APIError_UserAlreadyExist_';
+export type { APIError_UserAlreadyInProject_ } from './models/APIError_UserAlreadyInProject_';
+export type { APIError_UserNotFound_ } from './models/APIError_UserNotFound_';
+export type { APIErrorDetails_Literal__AccessDenied___ } from './models/APIErrorDetails_Literal__AccessDenied___';
+export type { APIErrorDetails_Literal__DuplicateKeyError___ } from './models/APIErrorDetails_Literal__DuplicateKeyError___';
+export type { APIErrorDetails_Literal__ProjectNotFound___ } from './models/APIErrorDetails_Literal__ProjectNotFound___';
+export type { APIErrorDetails_Literal__ServerNotFound___ } from './models/APIErrorDetails_Literal__ServerNotFound___';
+export type { APIErrorDetails_Literal__UserAlreadyExist___ } from './models/APIErrorDetails_Literal__UserAlreadyExist___';
+export type { APIErrorDetails_Literal__UserAlreadyInProject___ } from './models/APIErrorDetails_Literal__UserAlreadyInProject___';
+export type { APIErrorDetails_Literal__UserNotFound___ } from './models/APIErrorDetails_Literal__UserNotFound___';
+export type { APIErrorDetails_TypeVar_ } from './models/APIErrorDetails_TypeVar_';
+export type { APIServer } from './models/APIServer';
+export type { BaseCompletionOptions } from './models/BaseCompletionOptions';
+export type { ContextProvider_Literal__code___NoneType_ } from './models/ContextProvider_Literal__code___NoneType_';
+export type { ContextProvider_Literal__codebase___NoneType_ } from './models/ContextProvider_Literal__codebase___NoneType_';
+export type { ContextProvider_Literal__diff___NoneType_ } from './models/ContextProvider_Literal__diff___NoneType_';
+export type { ContextProvider_Literal__docs___DocsParameters__Input } from './models/ContextProvider_Literal__docs___DocsParameters__Input';
+export type { ContextProvider_Literal__docs___DocsParameters__Output } from './models/ContextProvider_Literal__docs___DocsParameters__Output';
+export type { ContextProvider_Literal__open___OpenParameters_ } from './models/ContextProvider_Literal__open___OpenParameters_';
+export type { ContextProvider_Literal__search___NoneType_ } from './models/ContextProvider_Literal__search___NoneType_';
+export type { ContextProvider_Literal__url___NoneType_ } from './models/ContextProvider_Literal__url___NoneType_';
+export type { ContinueConfig } from './models/ContinueConfig';
+export type { ContinueDevProject } from './models/ContinueDevProject';
+export type { CreateProjectRequest } from './models/CreateProjectRequest';
+export type { CreateUserRequest } from './models/CreateUserRequest';
+export type { CustomCommand } from './models/CustomCommand';
+export type { DocsParameters } from './models/DocsParameters';
+export type { DocsSite } from './models/DocsSite';
+export type { EmbeddingsProvider } from './models/EmbeddingsProvider';
+export type { HTTPValidationError } from './models/HTTPValidationError';
+export type { JoinResult } from './models/JoinResult';
+export type { ListAllModelsResponse } from './models/ListAllModelsResponse';
+export type { LoginRequest } from './models/LoginRequest';
+export type { Model_Literal__ollama___ } from './models/Model_Literal__ollama___';
+export type { ModelRequestOptions } from './models/ModelRequestOptions';
+export type { ollama_x__client__ollama__OllamaModel } from './models/ollama_x__client__ollama__OllamaModel';
+export type { ollama_x__model__ollama__OllamaModel } from './models/ollama_x__model__ollama__OllamaModel';
+export type { OllamaListModelsResponse } from './models/OllamaListModelsResponse';
+export type { OllamaModelDetails } from './models/OllamaModelDetails';
+export type { OllamaModelInfo } from './models/OllamaModelInfo';
+export type { OllamaPullModelResponseSingle } from './models/OllamaPullModelResponseSingle';
+export type { OllamaPullModelResponseStream } from './models/OllamaPullModelResponseStream';
+export type { OllamaRunningModel } from './models/OllamaRunningModel';
+export type { OpenParameters } from './models/OpenParameters';
+export type { ProjectConfig_Input } from './models/ProjectConfig_Input';
+export type { ProjectConfig_Output } from './models/ProjectConfig_Output';
+export type { RequestOptions } from './models/RequestOptions';
+export type { TabAutocompleteModel } from './models/TabAutocompleteModel';
+export type { TabAutocompleteOptions } from './models/TabAutocompleteOptions';
+export type { Token } from './models/Token';
+export type { User } from './models/User';
+export type { UserBase } from './models/UserBase';
+export type { ValidationError } from './models/ValidationError';
+
+export { AdminService } from './services/AdminService';
+export { ContinueService } from './services/ContinueService';
+export { OllamaService } from './services/OllamaService';
+export { ServerService } from './services/ServerService';
+export { UserService } from './services/UserService';

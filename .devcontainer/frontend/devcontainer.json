@@ -15,7 +15,8 @@
         "formulahendry.auto-rename-tag",
         "bradlc.vscode-tailwindcss",
         "naumovs.color-highlight",
-        "mikestead.dotenv"
+        "mikestead.dotenv",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -37,11 +38,7 @@
     }
   },
 
-  "forwardPorts": [
-    "frontend:3000",
-    "backend:8000",
-    "mongo:27017"
-  ],
-  "postCreateCommand": "npm --prefix frontend install --production=false",
+  "forwardPorts": ["frontend:3000", "backend:8000", "mongo:27017", "ollama:11434"],
+  "postCreateCommand": "echo alias npm=\\\"npm --prefix /app/frontend\\\" >> /home/node/.zshrc && npm i --prefix /app/frontend",
   "remoteUser": "node"
 }

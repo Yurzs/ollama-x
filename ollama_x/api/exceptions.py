@@ -1,3 +1,4 @@
+import logging
 from typing import Generic, Literal, Self, TypeVar
 
 from fastapi import Request
@@ -8,11 +9,31 @@ from starlette.responses import JSONResponse
 
 from ollama_x.model.exceptions import DuplicateKeyError
 
+LOG = logging.getLogger(__name__)
+
 TE = TypeVar("TE", bound=type[Exception])
 E = TypeVar("E", bound=Exception)
 T = TypeVar("T")
-
 C = TypeVar("C", bound="str")
+
+
+class InternalError(Exception):
+    def __init__(self) -> None:
+        super().__init__("Internal error")
+
+
+class BaseAPIException(Exception):
+    status_code: int = 400
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+
+
+class AccessDenied(BaseAPIException):
+    status_code: int = 403
+
+    def __init__(self, message: str = "Access denied") -> None:
+        super().__init__(message)
 
 
 @dataclass(frozen=True)
@@ -36,20 +57,6 @@ class APIError(BaseModel, Generic[TE]):
 
     def __init__(self, exc: E) -> None:
         super().__init__(detail={"code": exc.__class__.__name__, "message": str(exc)})
-
-
-class BaseAPIException(Exception):
-    status_code: int = 500
-
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
-
-
-class AccessDenied(BaseAPIException):
-    status_code: int = 403
-
-    def __init__(self) -> None:
-        super().__init__("Access denied")
 
 
 class UserNotFound(BaseAPIException):
@@ -80,6 +87,13 @@ class UserAlreadyInProject(BaseAPIException):
         super().__init__("User already in project.")
 
 
+def handle_api_error(request: Request, exc: BaseAPIException) -> JSONResponse:
+    return JSONResponse(
+        content=APIError[exc](exc).model_dump(by_alias=True),
+        status_code=exc.status_code,
+    )
+
+
 def handle_document_not_found(request: Request, exc: DocumentNotFound) -> JSONResponse:
     return JSONResponse(
         content=APIError[exc](exc).model_dump(by_alias=True),
@@ -95,13 +109,16 @@ def handle_duplicate_key_error(request: Request, exc: DuplicateKeyError):
 
 
 def handle_generic_exception(request: Request, exc: Exception):
+    LOG.exception(exc)
+
     return JSONResponse(
         status_code=500,
-        content=APIError[exc](exc).model_dump(by_alias=True),
+        content=APIError[InternalError](InternalError()).model_dump(by_alias=True),
     )
 
 
 HANDLERS = {
+    BaseAPIException: handle_api_error,
     DocumentNotFound: handle_document_not_found,
     DuplicateKeyError: handle_duplicate_key_error,
     Exception: handle_generic_exception,

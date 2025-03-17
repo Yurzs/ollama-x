@@ -1,25 +1,57 @@
-from fastapi import APIRouter
+from datetime import timedelta
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 
 from ollama_x.api.exceptions import AccessDenied, APIError, UserAlreadyExist, UserNotFound
-from ollama_x.api.helpers import AdminUser
-from ollama_x.model import User
-from ollama_x.model.user import UserBase
+from ollama_x.api.helpers import APIAdmin
+from ollama_x.api.security import (
+    Token,
+    create_access_token,
+    get_current_user,
+    get_admin_user,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
+from ollama_x.model.user import User, UserBase
 from ollama_x.config import config
 
-PREFIX = "user"
-
-router = APIRouter(prefix=f"/{PREFIX}", tags=[PREFIX])
+router = APIRouter(prefix="/user", tags=["user"])
 
 
 class CreateUserRequest(BaseModel):
     username: str
+    password: str
     is_admin: bool = False
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+@router.post(".login", response_model=Token)
+async def login_for_access_token(form_data: LoginRequest):
+    """Generate JWT token for user authentication."""
+
+    user = await User.authenticate(form_data.username, form_data.password)
+    if not user:
+        raise AccessDenied(message="Incorrect username or password")
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserBase)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    """Get current user information."""
+
+    return UserBase.from_document(current_user, exclude_secrets=False)
+
+
 @router.get(
-    "/one",
-    operation_id=f"{PREFIX}.one",
+    ".one",
     summary="Get user by username",
     tags=["admin"],
     response_model=User | APIError,
@@ -34,21 +66,17 @@ class CreateUserRequest(BaseModel):
         },
     },
 )
-async def get_user(admin: AdminUser, username: str) -> User | list[User]:
+async def get_user(admin: User = Depends(get_admin_user), username: str = None) -> User:
     """Get users."""
-
     user = await User.one_by_username(username, required=False)
-
     if user is None:
         raise UserNotFound()
-
     return user
 
 
 @router.get(
-    "/all",
-    operation_id=f"{PREFIX}.all",
-    summary="Get user by username",
+    ".all",
+    summary="Get all users",
     tags=["admin"],
     response_model=list[User] | APIError,
     responses={
@@ -58,15 +86,13 @@ async def get_user(admin: AdminUser, username: str) -> User | list[User]:
         },
     },
 )
-async def get_all_users(admin: AdminUser) -> list[User]:
+async def get_all_users(admin: User = Depends(get_admin_user)) -> list[User]:
     """Get users from database."""
-
     return [user async for user in User.all()]
 
 
 @router.post(
-    "/",
-    operation_id=f"{PREFIX}.create",
+    ".create",
     summary="Create user",
     response_model=UserBase | APIError,
     response_model_exclude_defaults=True,
@@ -79,18 +105,20 @@ async def get_all_users(admin: AdminUser) -> list[User]:
         }
     },
 )
-async def create_user(admin: AdminUser, username: str, is_admin: bool = False) -> UserBase:
+async def create_user(
+    user_data: CreateUserRequest, admin: User = Depends(get_admin_user)
+) -> UserBase:
     """Create new user."""
-
     return UserBase.from_document(
-        await User.new(username=username, is_admin=is_admin),
+        await User.new(
+            username=user_data.username, password=user_data.password, is_admin=user_data.is_admin
+        ),
         exclude_secrets=False,
     )
 
 
 @router.delete(
-    "/",
-    operation_id=f"{PREFIX}.delete",
+    ".delete",
     summary="Delete user",
     tags=["admin"],
     response_model=User | APIError,
@@ -105,7 +133,7 @@ async def create_user(admin: AdminUser, username: str, is_admin: bool = False) -
         },
     },
 )
-async def delete_user(admin: AdminUser, username: str) -> User:
+async def delete_user(admin: APIAdmin, username: str) -> User:
     """Delete user by username."""
 
     user = await User.one_by_username(username)
@@ -116,9 +144,8 @@ async def delete_user(admin: AdminUser, username: str) -> User:
 
 
 @router.post(
-    "/reset_key",
+    ".reset_key",
     response_model=UserBase | APIError,
-    operation_id=f"{PREFIX}.reset-key",
     summary="Reset user API key",
     tags=["admin"],
     responses={
@@ -132,7 +159,7 @@ async def delete_user(admin: AdminUser, username: str) -> User:
         },
     },
 )
-async def change_key(admin: AdminUser, username: str) -> UserBase:
+async def change_key(admin: APIAdmin, username: str) -> UserBase:
     """Change user key by username."""
 
     user = await User.one_by_username(username)
@@ -145,8 +172,7 @@ async def change_key(admin: AdminUser, username: str) -> UserBase:
 
 
 @router.get(
-    "/register",
-    operation_id=f"{PREFIX}.register",
+    ".register",
     response_model=UserBase | APIError,
     response_model_exclude_none=True,
     response_model_exclude_unset=True,
@@ -162,15 +188,13 @@ async def change_key(admin: AdminUser, username: str) -> UserBase:
         },
     },
 )
-async def user_register(email: EmailStr) -> UserBase:
-    """Register new user get user key in response."""
-
+async def user_register(email: EmailStr, password: str) -> UserBase:
+    """Register new user."""
     if not config.user_registration_enabled:
         raise AccessDenied()
 
     if await User.one_by_username(email, required=False) is not None:
         raise UserAlreadyExist()
 
-    user = await User.new(username=email)
-
+    user = await User.new(username=email, password=password)
     return UserBase.from_document(user, exclude_secrets=False)
