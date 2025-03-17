@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 
 from ollama_x.api.exceptions import AccessDenied, APIError, UserAlreadyExist, UserNotFound
-from ollama_x.api.helpers import AdminUser
+from ollama_x.api.helpers import APIAdmin
 from ollama_x.api.security import (
     Token,
     create_access_token,
@@ -14,7 +14,7 @@ from ollama_x.api.security import (
 from ollama_x.model.user import User, UserBase
 from ollama_x.config import config
 
-router = APIRouter(prefix="/api/user", tags=["user"])
+router = APIRouter(prefix="/user", tags=["user"])
 
 
 class CreateUserRequest(BaseModel):
@@ -46,7 +46,8 @@ async def login_for_access_token(form_data: LoginRequest):
 @router.get("/me", response_model=UserBase)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """Get current user information."""
-    return UserBase.from_document(current_user)
+
+    return UserBase.from_document(current_user, exclude_secrets=False)
 
 
 @router.get(
@@ -132,7 +133,7 @@ async def create_user(
         },
     },
 )
-async def delete_user(admin: AdminUser, username: str) -> User:
+async def delete_user(admin: APIAdmin, username: str) -> User:
     """Delete user by username."""
 
     user = await User.one_by_username(username)
@@ -158,7 +159,7 @@ async def delete_user(admin: AdminUser, username: str) -> User:
         },
     },
 )
-async def change_key(admin: AdminUser, username: str) -> UserBase:
+async def change_key(admin: APIAdmin, username: str) -> UserBase:
     """Change user key by username."""
 
     user = await User.one_by_username(username)

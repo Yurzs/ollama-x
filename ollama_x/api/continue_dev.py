@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Request
-from openapi_cli.separator import CLI_SEPARATOR
 from pydantic import BaseModel, ConfigDict, Field
 
 from ollama_x.api import endpoints
 from ollama_x.api.exceptions import AccessDenied, APIError
 from ollama_x.api.helpers import (
-    AuthorizedUser,
+    AIUser,
+    APIUser,
     ContinueProject,
     ProjectWithAdminAccess,
     merge_responses,
@@ -21,10 +21,7 @@ from ollama_x.model.continue_dev import (
 )
 from ollama_x.model.user import UserNotFound
 
-PREFIX = "continue"
-EDIT_COMMAND = f"{PREFIX}.edit.{CLI_SEPARATOR}"
-
-router = APIRouter(tags=[endpoints.CONTINUE])
+router = APIRouter(prefix="/continue", tags=[endpoints.CONTINUE])
 
 
 DEFAULT_RESPONSES = {
@@ -37,14 +34,13 @@ DEFAULT_RESPONSES = {
 
 
 @router.get(
-    endpoints.CONTINUE_ALL,
-    operation_id=f"{PREFIX}.all",
+    ".all",
     response_model_exclude_none=True,
     response_model_exclude_unset=True,
     response_model=list[ContinueDevProject] | APIError,
     responses=DEFAULT_RESPONSES,
 )
-async def list_projects(user: AuthorizedUser, request: Request):
+async def list_projects(user: APIUser, request: Request):
     """Get list of continue.dev projects."""
 
     projects = []
@@ -55,13 +51,12 @@ async def list_projects(user: AuthorizedUser, request: Request):
 
 
 @router.get(
-    endpoints.CONTINUE_ONE,
-    operation_id=f"{PREFIX}.one",
+    ".one",
     response_model_exclude_none=True,
     response_model=ContinueDevProject,
     responses=DEFAULT_RESPONSES,
 )
-async def get_project(user: AuthorizedUser, project_name: str, request: Request):
+async def get_project(user: APIUser, project_name: str, request: Request):
     """Get information about single continue.dev project."""
 
     project = await ContinueDevProject.one_by_name(project_name)
@@ -73,14 +68,13 @@ class CreateProjectRequest(ContinueDevProject):
 
 
 @router.post(
-    endpoints.CONTINUE_CREATE,
-    operation_id=f"{PREFIX}.create",
+    ".create",
     response_model_exclude_none=True,
     summary="Create new continue.dev project.",
     response_model=ContinueDevProject | APIError,
     responses=DEFAULT_RESPONSES,
 )
-async def create_project(user: AuthorizedUser, project: CreateProjectRequest):
+async def create_project(user: APIUser, project: CreateProjectRequest):
     """Create new continue.dev project."""
 
     await User.one_by_username(project.admin)
@@ -100,8 +94,7 @@ class JoinResult(BaseModel):
 
 
 @router.get(
-    endpoints.CONTINUE_PROJECT_JOIN,
-    operation_id=f"{PREFIX}.join",
+    "/join/{{invite_id}}",
     response_model=JoinResult | APIError,
     responses=merge_responses(
         DEFAULT_RESPONSES,
@@ -133,9 +126,8 @@ class ContinueConfig(BaseModel):
 
 
 @router.get(
-    endpoints.CONTINUE_SYNC_CONFIG,
+    "/sync",
     summary="Get project config.",
-    operation_id=f"{PREFIX}.sync",
     response_model_exclude_none=True,
     response_model=ContinueConfig,
     responses=DEFAULT_RESPONSES,
@@ -151,9 +143,8 @@ async def get_config(project: ContinueProject, request: Request):
 
 
 @router.post(
-    "/reset-invite-id",
+    ".reset-invite-id",
     summary="Get project config.",
-    operation_id=f"{PREFIX}.reset-invite-id",
     response_model_exclude_none=True,
     response_model=ContinueDevProject,
     responses=DEFAULT_RESPONSES,
@@ -169,9 +160,8 @@ async def reset_invite_id(project_id: str):
 
 
 @router.patch(
-    endpoints.CONTINUE_EDIT_MODELS,
+    "/models.edit",
     response_model=ContinueDevProject | APIError,
-    operation_id=f"{EDIT_COMMAND}.models",
     response_model_exclude_none=True,
     responses=DEFAULT_RESPONSES,
 )
@@ -189,8 +179,7 @@ async def edit_models(project: ProjectWithAdminAccess, models: list[AllModels] |
 
 
 @router.patch(
-    endpoints.CONTINUE_EDIT_EMBEDDINGS,
-    operation_id=f"{EDIT_COMMAND}.embeddings",
+    "/embeddings.edit",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
     responses=DEFAULT_RESPONSES,
@@ -208,8 +197,7 @@ async def edit_embeddings(
 
 
 @router.patch(
-    endpoints.CONTINUE_EDIT_TAB_AUTOCOMPLETE_MODEL,
-    operation_id=f"{EDIT_COMMAND}.tab_autocomplete_model",
+    "tab-autocomplete-model.edit",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
     responses=DEFAULT_RESPONSES,
@@ -227,8 +215,7 @@ async def edit_tab_autocomplete_model(
 
 
 @router.patch(
-    endpoints.CONTINUE_EDIT_TAB_AUTOCOMPLETE_OPTIONS,
-    operation_id=f"{EDIT_COMMAND}.tab_autocomplete_options",
+    "/tab-autocomplete-options.edit",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
     responses=DEFAULT_RESPONSES,
@@ -246,8 +233,7 @@ async def edit_tab_autocomplete_options(
 
 
 @router.patch(
-    endpoints.CONTINUE_EDIT_CONTEXT_PROVIDERS,
-    operation_id=f"{EDIT_COMMAND}.context_providers",
+    "/context-providers.edit",
     response_model=ContinueDevProject | APIError,
     response_model_exclude_none=True,
     responses=DEFAULT_RESPONSES,

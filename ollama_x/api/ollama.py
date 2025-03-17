@@ -9,6 +9,7 @@ from typing import Any, Self
 import aiohttp
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field, computed_field
 
 from ollama_x.api import endpoints
 from ollama_x.api.exceptions import NoServerAvailable
@@ -220,7 +221,6 @@ async def generate_embeddings(request: Request):
     endpoints.OLLAMA_COMPLETIONS,
     endpoints.OLLAMA_OPENAI_COMPLETIONS,
     endpoints.OLLAMA_OPENAI_CHAT,
-    include_in_schema=False,
 )
 async def proxy(session: AISession, request: Request):
     """Proxy generate request."""
@@ -267,3 +267,35 @@ async def proxy(session: AISession, request: Request):
         raise queue_request.response.exception()
 
     return queue_request.response.result()
+
+
+class ListAllModelsResponse(BaseModel):
+    """Response model for listing all models."""
+
+    models: list[OllamaModel] = Field(..., description="List of LLM models")
+
+    @computed_field
+    @property
+    def count(self) -> int:
+        return len(self.models)
+
+
+@router.get("/ollama/models", response_model=ListAllModelsResponse,
+    response_model_exclude_none=True)
+async def list_all_models_with_details() -> ListAllModelsResponse:
+    """Get detailed information about all models installed on Ollama servers."""
+
+    models = {}
+
+    async for server in APIServer.all_active():
+        try:
+            # Use the ollama client to fetch model information
+            async with server.ollama_client.list_models() as response:
+                for model in response.models:
+                    if model.name not in models:
+                        models[model.name] = model
+        except Exception as e:
+            # Log the error but continue with other servers
+            print(f"Error fetching models from {server.url}: {e}")
+
+    return ListAllModelsResponse(models=list(models.values()))

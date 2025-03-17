@@ -6,14 +6,13 @@ from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from ollama_x.api.exceptions import AccessDenied
-from ollama_x.config import config
 from ollama_x.model.user import User
 
 # Generate a secure secret key: openssl rand -hex 32
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/user.login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user.login")
 
 
 class Token(BaseModel):

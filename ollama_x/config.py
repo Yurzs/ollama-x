@@ -1,7 +1,7 @@
 import logging
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import ConfigDict, Field, SecretStr
 from pydantic_app_config import EnvAppConfig
 
 from ollama_x.types import OllamaModel
@@ -11,6 +11,14 @@ LOG = logging.getLogger(__name__)
 
 class OllamaXConfig(EnvAppConfig):
     """OllamaX app configuration."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="ignore",
+        frozen=True,
+        validate_default=True,
+        validate_assignment=True,
+    )
 
     log_level: Literal[
         "DEBUG",

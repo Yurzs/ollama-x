@@ -1,19 +1,25 @@
+from typing import Union
+
 from fastapi import APIRouter
+from starlette.responses import StreamingResponse
 
 from ollama_x.api.exceptions import AccessDenied, APIError
-from ollama_x.api.helpers import AdminUser
+from ollama_x.api.helpers import APIAdmin
+from ollama_x.client.ollama import (
+    OllamaListModelsResponse,
+    OllamaPullModelResponseSingle,
+    OllamaPullModelResponseStream,
+)
 from ollama_x.model import APIServer
 from ollama_x.model.server import ServerBase
 from ollama_x.scheduler import add_server_job, delete_server_job
 
-PREFIX = "server"
 
-router = APIRouter(prefix=f"/{PREFIX}", tags=[PREFIX])
+router = APIRouter(prefix="/server", tags=["server"])
 
 
 @router.get(
-    "/one",
-    operation_id=f"{PREFIX}.one",
+    ".one",
     tags=["admin"],
     response_model=APIServer | APIError,
     responses={
@@ -24,7 +30,7 @@ router = APIRouter(prefix=f"/{PREFIX}", tags=[PREFIX])
         403: {"model": APIError[AccessDenied], "description": "Access errors."},
     },
 )
-async def get_server(admin: AdminUser, server_id: str) -> APIServer:
+async def get_server(admin: APIAdmin, server_id: str) -> APIServer:
     """Get server."""
 
     if server_id:
@@ -34,8 +40,7 @@ async def get_server(admin: AdminUser, server_id: str) -> APIServer:
 
 
 @router.get(
-    "/all",
-    operation_id=f"{PREFIX}.all",
+    ".all",
     tags=["admin"],
     response_model=list[APIServer] | APIError,
     responses={
@@ -46,15 +51,14 @@ async def get_server(admin: AdminUser, server_id: str) -> APIServer:
         403: {"model": APIError[AccessDenied], "description": "Access errors."},
     },
 )
-async def get_servers(admin: AdminUser) -> list[APIServer]:
+async def get_servers(user: APIAdmin) -> list[APIServer]:
     """Get servers."""
 
     return [server async for server in APIServer.all()]
 
 
 @router.post(
-    "/create",
-    operation_id=f"{PREFIX}.create",
+    ".create",
     tags=["admin"],
     response_model=APIServer | APIError,
     responses={
@@ -65,7 +69,7 @@ async def get_servers(admin: AdminUser) -> list[APIServer]:
         403: {"model": APIError[AccessDenied], "description": "Access errors."},
     },
 )
-async def create_server(admin: AdminUser, url: str) -> APIServer:
+async def create_server(user: APIAdmin, url: str) -> APIServer:
     """Create server."""
 
     server = await APIServer.new(ServerBase(url=url))
@@ -75,8 +79,7 @@ async def create_server(admin: AdminUser, url: str) -> APIServer:
 
 
 @router.put(
-    "/update",
-    operation_id=f"{PREFIX}.update",
+    ".update",
     tags=["admin"],
     response_model=APIServer,
     responses={
@@ -88,7 +91,7 @@ async def create_server(admin: AdminUser, url: str) -> APIServer:
     },
 )
 async def update_server(
-    admin: AdminUser,
+    user: APIAdmin,
     server_id: str,
     server_url: str | None = None,
 ) -> APIServer:
@@ -104,8 +107,7 @@ async def update_server(
 
 
 @router.delete(
-    "/",
-    operation_id=f"{PREFIX}.delete",
+    ".delete",
     tags=["admin"],
     response_model=APIServer,
     responses={
@@ -116,7 +118,7 @@ async def update_server(
         403: {"model": APIError[AccessDenied], "description": "Access errors."},
     },
 )
-async def delete_server(admin: AdminUser, server_id: str) -> APIServer:
+async def delete_server(user: APIAdmin, server_id: str) -> APIServer:
     """Delete server."""
 
     server = await APIServer.one(server_id)
@@ -127,10 +129,57 @@ async def delete_server(admin: AdminUser, server_id: str) -> APIServer:
     return server
 
 
-@router.post("/{server_id:str}/pull")
-async def server_pull_model(server_id: str, model: str):
+@router.get(
+    "/{server_id:str}/model.list",
+    tags=["admin"],
+    response_model=OllamaListModelsResponse,
+    responses={
+        400: {
+            "model": APIError[APIServer.NotFoundError],
+            "description": "Generic errors.",
+        },
+        403: {"model": APIError[AccessDenied], "description": "Access errors."},
+    },
+)
+async def server_models(user: APIAdmin, server_id: str) -> OllamaListModelsResponse:
+    """Get all models for a specific server."""
+
+    server = await APIServer.one(server_id)
+
+    async with server.ollama_client.list_models() as response:
+        return response
+
+
+@router.post("/{server_id:str}/model.pull")
+async def server_pull_model(
+    user: APIAdmin,
+    server_id: str,
+    model: str,
+    stream: bool = True,
+) -> Union[OllamaPullModelResponseSingle, OllamaPullModelResponseStream]:
     """Pull model to server."""
 
     server = await APIServer.one(server_id)
 
-    return server.pull_model(model)
+    if stream:
+        return StreamingResponse(
+            server.ollama_client.pull_model(model),
+            media_type="application/x-ndjson",
+        )
+
+    async with server.ollama_client.pull_model(model) as response:
+        return response
+
+
+@router.delete("/{server_id:str}/model.delete")
+async def server_delete_model(
+    user: APIAdmin,
+    server_id: str,
+    model: str,
+) -> None:
+    """Delete model from server."""
+
+    server = await APIServer.one(server_id)
+
+    async with server.ollama_client.delete_model(model):
+        return
