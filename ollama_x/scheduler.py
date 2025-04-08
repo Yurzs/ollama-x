@@ -9,6 +9,8 @@ from pytz import utc
 
 from ollama_x.config import config
 from ollama_x.model import APIServer, OllamaModel
+from ollama_x.startup import STARTUP_TASKS
+
 
 LOG = logging.getLogger(__name__)
 
@@ -148,7 +150,19 @@ async def ensure_jobs():
     )
 
 
+async def run_startup() -> None:
+    """Run startup tasks."""
+
+    for task in STARTUP_TASKS:
+        if asyncio.iscoroutinefunction(task):
+            await task()
+        else:
+            task()
+
+
 async def start():
+    await run_startup()
+
     scheduler.start()
 
     await ensure_jobs()
