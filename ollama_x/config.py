@@ -3,7 +3,7 @@ from typing import ClassVar, Literal
 
 import sentry_sdk
 from pydantic import Field
-from pydantic_app_config import EnvAppConfig
+from pydantic_conf import EnvAppConfig
 from pydantic_mongo_document import ReplicaConfig
 from pydantic_mongo_document.document.asyncio import Document
 
