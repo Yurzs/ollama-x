@@ -3,7 +3,7 @@ name: ollama-x
 services:
   app:
     container_name: ollama-x-app
-    image: ollama-x:latest
+    image: ghcr.io/yurzs/ollama-x:latest
     build:
       context: ../
       dockerfile: .docker/Dockerfile
@@ -22,14 +22,14 @@ services:
       - cli_creds:/app/.openapi_cli/
   scheduler:
     container_name: ollama-x-scheduler
-    image: ollama-x:latest
+    image: ghcr.io/yurzs/ollama-x:latest
     pull_policy: never
     depends_on:
       - app
       - mongo
     environment:
       MONGO_URI: mongodb://mongo:27017
-    command: ["poetry", "run", "ollama-x-scheduler"]
+    command: ["ollama-x-scheduler"]
   mongo:
     container_name: ollama-x-mongo
     image: mongo:latest
