@@ -2,8 +2,10 @@ from fastapi import FastAPI
 
 from ollama_x.api import exceptions, routers
 from ollama_x.api.middleware import MIDDLEWARES
+from ollama_x.startup import STARTUP_TASKS
 
-app = FastAPI()
+
+app = FastAPI(on_startup=STARTUP_TASKS)
 
 for router in routers:
     app.include_router(router)
