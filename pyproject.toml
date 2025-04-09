@@ -30,8 +30,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "plumbum>=1.8.3",
-    "ruff>=0.6.2",
-    "openapi-cli[full]>=0.2",
+    "ruff>=0.4",
+    "openapi-cli[full]>=0.2.1.14",
     "types-python-jose>=3.4.0.20250224",
     "types-passlib>=1.7.7.20241221"
 ]
