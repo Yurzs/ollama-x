@@ -13,9 +13,7 @@ COPY ollama_x ollama_x
 COPY README.md .
 
 # Create virtual environment and install dependencies
-RUN uv venv .venv \
-    && . .venv/bin/activate \
-    && uv pip install -e .
+RUN uv sync --extra dev
 
 FROM gcr.io/distroless/python3-debian12:${debug:+debug-}nonroot
 COPY --from=builder /app /app
